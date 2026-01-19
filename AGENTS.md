@@ -7,14 +7,14 @@ This repository is structured as a Claude Code plugin (see `plugins/`), but the 
 ## Structure
 
 ```
-plugins/skills/<skill-name>/SKILL.md
+plugins/sentry-sdk-skills/skills/<skill-name>/SKILL.md
 ```
 
 Each skill is a directory containing a `SKILL.md` file with YAML frontmatter (`name`, `description`) and markdown instructions.
 
 ## Creating a Skill
 
-1. Create `plugins/skills/<skill-name>/SKILL.md`
+1. Create `plugins/sentry-sdk-skills/skills/<skill-name>/SKILL.md`
 2. Add YAML frontmatter (see below)
 3. Write clear instructions in markdown
 4. Update `README.md` to include the new skill in the Available Skills table

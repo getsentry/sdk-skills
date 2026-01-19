@@ -48,9 +48,10 @@ sdk-skills/
 ├── .claude-plugin/
 │   └── marketplace.json      # Marketplace manifest
 ├── plugins/
-│     ├── .claude-plugin/
-│     │   └── plugin.json   # Plugin manifest
-│     └── skills/
+│   └── sentry-sdk-skills/
+│       ├── .claude-plugin/
+│       │   └── plugin.json   # Plugin manifest
+│       └── skills/
 ├── AGENTS.md                 # Agent-facing documentation
 ├── CLAUDE.md                 # Symlink to AGENTS.md
 └── README.md                 # This file
@@ -62,10 +63,10 @@ Skills follow the [Agent Skills specification](https://agentskills.io/specificat
 
 ### Skill Template
 
-Create a new directory under `plugins/skills/`:
+Create a new directory under `plugins/sentry-sdk-skills/skills/`:
 
 ```
-plugins/skills/my-skill/
+plugins/sentry-sdk-skills/skills/my-skill/
 └── SKILL.md
 ```
 

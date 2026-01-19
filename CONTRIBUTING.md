@@ -18,9 +18,9 @@ Thank you for your interest in contributing to Sentry SDK Skills! This guide wil
 
 ## Creating a New Skill
 
-1. Create a new directory under `plugins/skills/`:
+1. Create a new directory under `plugins/sentry-sdk-skills/skills/`:
    ```bash
-   mkdir -p plugins/skills/my-new-skill
+   mkdir -p plugins/sentry-sdk-skills/skills/my-new-skill
    ```
 
 2. Create `SKILL.md` with the required frontmatter:
