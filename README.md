@@ -39,6 +39,7 @@ Copy the `skills/` directory to your agent's skills location, or reference the S
 
 | Skill | Description |
 |-------|-------------|
+| `linear-initiative` | Creates Linear projects for SDK teams from an initiative. Use when rolling out features across multiple SDKs. |
 
 
 ## Repository Structure
