@@ -2,11 +2,16 @@
 name: linear-initiative
 description: Creates Linear projects for SDK repositories based on a Linear initiative. Use when rolling out a feature across multiple SDKs, creating SDK projects from initiative, or setting up cross-SDK alignment work.
 allowed-tools: Read mcp__linear-server__query_data mcp__linear-server__list_teams mcp__linear-server__list_projects mcp__linear-server__create_project mcp__linear-server__get_project mcp__linear-server__update_project mcp__linear-server__create_issue AskUserQuestion
+compatibility: Requires the Linear MCP server to be configured
 ---
 
 # Linear Project Creator
 
 Uses the content of a Linear initiative and creates projects for selected SDKs.
+
+## Requirements
+
+This skill requires the [Linear MCP server](https://github.com/linear/linear-mcp) to be configured.
 
 ## SDK Teams
 
