@@ -42,16 +42,10 @@ This skill can:
 
 **Read from shared context:**
 
-```bash
-# Read feature context
-cat .sdk-align/context.json
-
-# Read SDK status
-cat .sdk-align/status-report.json
-
-# Read created PRs
-cat .sdk-align/prs.json 2>/dev/null
-```
+Use the Read tool to check for and read:
+- `.sdk-align/context.json` (feature context)
+- `.sdk-align/status-report.json` (SDK status)
+- `.sdk-align/prs.json` (created PRs)
 
 **If context files don't exist:**
 Ask user for:

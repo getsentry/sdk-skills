@@ -60,16 +60,10 @@ This skill can:
 
 **Read from shared context:**
 
-```bash
-# Read feature context
-cat .sdk-align/context.json
-
-# Read implementation details
-cat .sdk-align/implementations.json
-
-# Check if PR already created
-cat .sdk-align/prs.json 2>/dev/null
-```
+Use the Read tool to check for and read:
+- `.sdk-align/context.json` (feature context)
+- `.sdk-align/implementations.json` (implementation details)
+- `.sdk-align/prs.json` (check if PR already created)
 
 **If context files don't exist:**
 Ask user for:

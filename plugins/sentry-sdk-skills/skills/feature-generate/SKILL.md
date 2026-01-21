@@ -58,11 +58,10 @@ This skill can:
 - Push to remote (default: false, just commit locally)
 
 **If context file exists:**
-```bash
-cat .sdk-align/context.json
-```
 
-Read feature name, develop doc, and reference implementation from context.
+Use the Read tool to check for and read `.sdk-align/context.json`.
+
+Extract feature name, develop doc, and reference implementation from context.
 
 **If no context file:**
 Ask user for:
