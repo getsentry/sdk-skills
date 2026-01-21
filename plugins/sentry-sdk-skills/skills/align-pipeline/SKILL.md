@@ -68,225 +68,88 @@ Checking implementation status across all SDKs...
 - Generate status report
 - Save context to `.sdk-align/`
 
-**Display status table to user:**
-```
-SDK Feature Status Report
-=========================
-Feature: Strict Trace Propagation
-Alignment Scope: Core
-
-Summary:
-  ✅ Implemented: 2 SDKs
-  ⚠️  Needs Review: 1 SDK
-  ❌ Not Implemented: 14 SDKs
-```
+Display the status report from `sdk-feature-status` to the user, showing:
+- Feature name and alignment scope
+- Count of implemented, needs review, and not implemented SDKs
+- List of SDKs needing implementation
 
 ### Step 3: Confirm Target SDKs
 
-Present SDKs needing implementation and ask user to confirm:
+Use AskUserQuestion to ask which SDKs to implement. Present options:
+- All SDKs needing implementation
+- Select specific SDKs (provide list)
+- Cancel
 
-```
-The following SDKs need implementation:
-  ruby, go, java, dotnet, rust, android, cocoa, react-native,
-  flutter, unity, unreal, native, elixir, kotlin
-
-Which SDKs would you like to implement?
-
-a) All 14 SDKs
-b) Select specific SDKs
-c) Cancel and exit
-```
-
-**If user selects (b):**
-Show interactive checklist:
-```
-Select SDKs to implement:
-  [x] ruby
-  [x] go
-  [x] java
-  [x] dotnet
-  [ ] rust
-  [ ] android
-  [ ] cocoa
-  [ ] react-native
-  [ ] flutter
-  [ ] unity
-  [ ] unreal
-  [ ] native
-  [ ] elixir
-  [ ] kotlin
-
-Continue with 4 selected SDKs? (y/n)
-```
-
-**Final SDK list** is confirmed by user.
+If user wants to select specific SDKs, use AskUserQuestion with multiSelect enabled to let them choose from the list of SDKs needing implementation.
 
 ### Step 4: Create Linear Tracking
 
-Ask user if they want to create Linear projects for tracking:
-
-```
-Create Linear projects for each SDK team to track this alignment work?
-
-Linear projects will help:
-- Each SDK team track their implementation work
-- Link projects to the SDK alignment initiative
-- Track PR links and progress per team
-
-Create Linear projects? (y/n)
-```
+Use AskUserQuestion to ask if they want to create Linear projects for tracking. Explain that Linear projects help teams track their work and link to the SDK alignment initiative.
 
 **If yes:**
-Invoke `linear-initiative` skill with the feature name and selected SDK teams:
-
-```
-Invoking linear-initiative...
-
-Creating Linear projects for selected SDK teams...
-✅ Created project for sentry-python: Strict Trace Propagation [Python]
-✅ Created project for sentry-go: Strict Trace Propagation [Go]
-✅ Created project for sentry-java: Strict Trace Propagation [Java]
-✅ Created project for sentry-dotnet: Strict Trace Propagation [.NET]
-
-All projects linked to "SDK Projects to Align Across SDKs" initiative.
-```
+Invoke `linear-initiative` skill with the feature name and selected SDK teams. The skill will create a project for each team and link them to the initiative.
 
 **If no:**
 Skip Linear tracking, continue without it.
 
 ### Step 5: Generate Implementations
 
-For each selected SDK, invoke `sdk-feature-generate`:
-
-**Show progress:**
-```
-Generating implementations for 4 SDKs...
-
-[1/4] Generating code for Ruby SDK...
-```
-
-**Invoke generate skill:**
-```
-Invoking sdk-feature-generate ruby...
-```
+For each selected SDK, invoke `sdk-feature-generate` with the SDK name. Show progress indicating which SDK is currently being processed (e.g., "1/4") and inform the user as each completes.
 
 **Handle results:**
-- ✅ **Success**: Implementation generated, linting passed, tests passed
-- ⚠️ **Partial success**: Implementation generated, but linting/tests failed
-- ❌ **Failure**: Could not generate implementation
+- Track successful generations (linting and tests passed)
+- Track partial successes (generated but with linting/test failures)
+- Track complete failures (could not generate)
+- Continue with next SDK regardless of individual failures
 
-**Continue with next SDK** regardless of individual failures.
-
-**Progress updates:**
-```
-[1/4] Ruby ✅ Generated successfully
-[2/4] Go ✅ Generated successfully
-[3/4] Java ⚠️  Generated with warnings (1 test failed)
-[4/4] .NET ✅ Generated successfully
-```
-
-**After all generations, show summary:**
-```
-Implementation Summary:
-  ✅ Successful: 3 SDKs (Ruby, Go, .NET)
-  ⚠️  Warnings: 1 SDK (Java - 1 test failure)
-  ❌ Failed: 0 SDKs
-
-Continue to PR creation? (y/n)
-```
-
-**If user selects no:**
-- Stop here
-- User can review implementations locally
-- User can manually run `sdk-feature-pr` later
+After all generations complete, summarize results and use AskUserQuestion to ask if they want to continue to PR creation. If no, stop and inform the user they can manually run `sdk-feature-pr` later for review.
 
 ### Step 6: Create Pull Requests
 
-For each successfully generated implementation, invoke `sdk-feature-pr`:
-
-**Show progress:**
-```
-Creating PRs for 3 SDKs (skipping Java due to test failures)...
-
-[1/3] Creating PR for Ruby SDK...
-```
-
-**Invoke PR skill:**
-```
-Invoking sdk-feature-pr ruby...
-```
+For each successfully generated implementation (skip those with test/linting failures), invoke `sdk-feature-pr` with the SDK name. Show progress indicating which SDK PR is being created and inform the user as each completes with the PR URL.
 
 **Handle results:**
-- ✅ **Success**: PR created
-- ❌ **Failure**: PR creation failed (branch not pushed, auth issue, etc.)
-
-**Progress updates:**
-```
-[1/3] Ruby ✅ PR #8888 created
-[2/3] Go ✅ PR #7777 created
-[3/3] .NET ✅ PR #6666 created
-```
+- Track successful PR creations with PR number and URL
+- Track failures (branch not pushed, auth issues, etc.)
+- Continue with remaining SDKs regardless of individual failures
 
 ### Step 7: Update Linear Projects
 
-If Linear projects were created, update each project with its corresponding PR link:
-
-```
-Updating Linear projects with PR links...
-
-✅ Updated sentry-python project with PR #9999
-✅ Updated sentry-go project with PR #8888
-✅ Updated sentry-dotnet project with PR #6666
-```
-
-For each SDK, add a comment or update the project description with the PR link using Linear MCP tools.
+If Linear projects were created, update each SDK team's project with its corresponding PR link using Linear MCP tools (create comment or update description).
 
 ### Step 8: Final Summary
 
-Display complete summary:
+Display a complete summary of the pipeline execution including:
 
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-SDK Alignment Pipeline Complete
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**Feature Information:**
+- Feature name and alignment scope
 
-Feature: Strict Trace Propagation
-Alignment Scope: Core
+**Status Check Results:**
+- Count of SDKs already implemented, needing review, and selected for implementation
 
-Status Check:
-  ✅ 2 SDKs already implemented
-  ⚠️  1 SDK needs review
-  🎯 4 SDKs selected for implementation
+**Linear Tracking (if created):**
+- Number of projects created
+- Confirmation they're linked to the initiative
 
-Linear Tracking:
-  ✅ Created 4 projects (one per SDK team)
-  ✅ All linked to "SDK Projects to Align Across SDKs" initiative
-  📊 Projects updated with PR links
+**Implementations Generated:**
+- List each SDK with success/failure status
+- Include branch names and any warnings (linting/test failures)
 
-Implementations Generated:
-  ✅ Ruby - Branch: feat/strict-trace-continuation
-  ✅ Go - Branch: feat/strict-trace-continuation
-  ⚠️  Java - Branch: feat/strict-trace-continuation (1 test failure)
-  ✅ .NET - Branch: feat/strict-trace-continuation
+**Pull Requests Created:**
+- List each PR with number and URL
+- Note any SDKs skipped due to failures
 
-Pull Requests Created:
-  ✅ Ruby #8888 - https://github.com/getsentry/sentry-ruby/pull/8888
-  ✅ Go #7777 - https://github.com/getsentry/sentry-go/pull/7777
-  ✅ .NET #6666 - https://github.com/getsentry/sentry-dotnet/pull/6666
+**Manual Review Needed (if applicable):**
+- List SDKs requiring fixes before PR creation
+- Provide specific commands or guidance for fixing issues
 
-Manual Review Needed:
-  ⚠️  Java - Fix test failure before creating PR
-     Run: cd /tmp/sentry-java && pytest tests/test_strict_trace.py
+**Next Steps:**
+- Suggest reviewing PRs
+- Note any manual fixes needed
+- Reference Linear projects for tracking
+- Mention updating develop docs if needed
 
-Next Steps:
-  1. Review PRs and address any feedback
-  2. Fix Java test failure and create PR manually
-  3. Track progress in Linear projects for each SDK team
-  4. Update develop docs if needed
-
-Context saved to .sdk-align/ directory.
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
+Inform the user that context has been saved to `.sdk-align/` directory for future reference.
 
 ## Guidelines
 
@@ -368,38 +231,18 @@ Allow users to:
 ### Batch Processing Optimization
 
 For large SDK sets (10+ SDKs):
-- Generate code for SDKs in parallel where possible
-- Show progress bar or percentage
-- Allow user to cancel and resume later
-
-**Example parallel generation:**
-```
-Generating implementations (parallel)...
-
-Ruby   ████████████████░░░░  75% (linting)
-Go     ████████████████████ 100% ✅
-Java   ████████░░░░░░░░░░░░  40% (generating tests)
-.NET   ████░░░░░░░░░░░░░░░░  20% (analyzing SDK)
-```
+- Consider invoking multiple `sdk-feature-generate` skills in parallel if the system supports it
+- Provide progress updates showing which SDKs are being processed
+- Inform the user they can stop and resume later if needed
 
 ### Resuming Failed Runs
 
-If pipeline fails mid-run, the skill can detect and resume from the partial state:
+If pipeline fails mid-run, the skill can detect and resume from the partial state by checking for `.sdk-align/` directory with existing context.
 
-When invoked again, check for `.sdk-align/` directory with partial context. If found, inform the user:
-
-```
-Detected partial run from previous execution:
-  ✅ Status check completed
-  ✅ Linear tracking created (GSD-1234)
-  ✅ 2/4 implementations generated (Ruby, Go)
-  ❌ Java generation failed
-  ⏳ .NET not started
-
-Would you like to resume from where we left off?
-```
-
-If user confirms, read context from `.sdk-align/` and resume from last successful step.
+When invoked again and partial context is found:
+- Inform the user about what was completed, what failed, and what remains
+- Use AskUserQuestion to ask if they want to resume from where it left off
+- If confirmed, read context from `.sdk-align/` files and resume from last successful step
 
 ## Example Workflows
 
