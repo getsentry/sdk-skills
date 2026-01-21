@@ -86,32 +86,13 @@ Analyze the develop doc to extract:
 - Fetch PR details
 
 **If not provided, search for it:**
+- Search for PRs mentioning the develop doc PR number using `gh search prs`
+- Search for PRs with related titles
+- Search code for feature-specific identifiers using `gh search code`
+- Filter results to SDK repos only (exclude sentry-docs, sentry, etc.)
+- Find the earliest merged PR as reference
 
-1. Search for PRs mentioning the develop doc PR number:
-```bash
-gh search prs --match body "<PR_NUMBER>" --owner getsentry --limit 10
-```
-
-2. Search for PRs with related titles:
-```bash
-gh search prs --match title "<feature-name>" --owner getsentry --state merged --limit 10
-```
-
-3. Search code for feature-specific identifiers:
-```bash
-gh search code "<config-option-name>" --owner getsentry --limit 10
-```
-
-4. Filter results to SDK repos only (exclude sentry-docs, sentry, etc.)
-
-5. Find the earliest merged PR as reference implementation
-
-**Extract reference implementation details:**
-- SDK name
-- PR URL and merge date
-- Key code patterns (class names, function names, config options)
-- File structure
-- Test patterns
+Extract: SDK name, PR URL, merge date, key patterns
 
 ### Step 3: Check All SDKs
 

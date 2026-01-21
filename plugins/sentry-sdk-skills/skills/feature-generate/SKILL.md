@@ -123,57 +123,10 @@ git checkout -b <branch-name>
 ### Step 4: Analyze Target SDK Patterns
 
 Study the target SDK to understand conventions:
-
-#### File Structure
-```bash
-# List directory structure
-tree . -L 3 -I "node_modules|__pycache__|.git|vendor|build|dist"
-
-# Find similar features
-find . -name "*integration*" -o -name "*config*" -o -name "*option*" | head -20
-```
-
-#### Naming Conventions
-```bash
-# Check for naming patterns
-grep -r "class.*Integration" . | head -5
-grep -r "def " . | head -20  # Python
-grep -r "function " . | head -20  # JavaScript
-grep -r "func " . | head -20  # Go
-```
-
-Detect:
-- **Python**: `snake_case` for functions/variables, `PascalCase` for classes
-- **JavaScript**: `camelCase` for functions/variables, `PascalCase` for classes
-- **Go**: `PascalCase` for exported, `camelCase` for unexported
-- **Ruby**: `snake_case` for methods, `PascalCase` for classes
-- **PHP**: `camelCase` or `snake_case` depending on framework
-- **Java/C#**: `PascalCase` for classes/methods, `camelCase` for variables
-
-#### Test Framework
-```bash
-# Identify test framework
-ls -la | grep -iE "(test|spec)"
-cat package.json | jq '.devDependencies' 2>/dev/null  # JavaScript
-cat pyproject.toml | grep -A5 "\[tool.pytest\]" 2>/dev/null  # Python
-cat Gemfile | grep -i test 2>/dev/null  # Ruby
-```
-
-Common frameworks:
-- **Python**: pytest
-- **JavaScript**: jest, vitest, mocha
-- **Ruby**: rspec
-- **PHP**: phpunit
-- **Go**: testing package
-- **Java**: junit
-
-#### Linting Configuration
-```bash
-# Find linting configs
-ls -la | grep -iE "(eslint|prettier|ruff|black|rubocop|golangci)"
-cat .eslintrc* 2>/dev/null
-cat pyproject.toml | grep -A10 "\[tool.ruff\]" 2>/dev/null
-```
+- Explore directory structure to find where similar features are implemented
+- Identify naming conventions (use Glob/Grep on existing files)
+- Locate test framework and patterns (check test directories)
+- Find linting configuration files (.eslintrc, pyproject.toml, .rubocop.yml, etc.)
 
 ### Step 5: Generate Idiomatic Implementation
 
@@ -218,60 +171,11 @@ Generate comprehensive tests that mirror the reference implementation's test cov
 
 ### Step 6: Run Linting and Tests
 
-Execute SDK-specific linting and testing:
-
-**Python:**
-```bash
-# Format code
-black sentry_sdk/tracing/strict_trace.py
-black tests/test_strict_trace.py
-
-# Lint
-ruff check sentry_sdk/tracing/strict_trace.py
-ruff check tests/test_strict_trace.py
-
-# Type check
-mypy sentry_sdk/tracing/strict_trace.py
-
-# Run tests
-pytest tests/test_strict_trace.py -v
-```
-
-**JavaScript:**
-```bash
-# Lint and format
-npm run lint:fix
-npm run prettier:fix
-
-# Type check
-npm run type-check
-
-# Run tests
-npm test -- --testPathPattern=strictTrace
-```
-
-**Go:**
-```bash
-# Format
-gofmt -w .
-
-# Lint
-golangci-lint run
-
-# Test
-go test ./...
-```
-
-**Ruby:**
-```bash
-# Format and lint
-bundle exec rubocop -a
-
-# Test
-bundle exec rspec spec/sentry/strict_trace_spec.rb
-```
-
-**Fix any linting/test errors** before proceeding. If tests fail, debug and fix.
+Execute SDK-specific linting and testing based on the SDK's configuration:
+- Run formatters and linters found in config files
+- Run type checking if the SDK uses it
+- Run the test suite on new/modified tests
+- Fix any linting or test errors before proceeding
 
 ### Step 7: Commit Changes
 
@@ -436,23 +340,18 @@ Mark each step as in_progress when starting and completed when finished. This he
 - Mark areas needing manual implementation
 - Provide implementation notes in commit message
 
-### Language-Specific Notes
+### Handling Edge Cases
 
-When generating code, study the target SDK's existing code to understand conventions. Claude already knows language idioms - focus on SDK-specific patterns:
+**Reference implementation not accessible:**
+- Use develop doc only to generate code
+- Ask user for clarification if needed
 
-**Key areas to analyze:**
-- Naming conventions (found via Grep/Glob on similar features)
-- Linting tools and configuration files (`.eslintrc`, `pyproject.toml`, `.rubocop.yml`, etc.)
-- Test framework and patterns (look at existing test files)
-- Type annotation style (if applicable)
-- Error handling patterns
+**Linting/test failures:**
+- Attempt auto-fix using linting tool flags
+- If unable to fix, document failures and continue
 
-**Common tooling by language:**
-- Python: black, ruff, mypy, pytest
-- JavaScript/TypeScript: eslint, prettier, jest/vitest
-- Go: gofmt, golangci-lint, standard testing package
-- Ruby: rubocop, rspec
-- Java: checkstyle, junit
-- C#/.NET: dotnet format, xunit/nunit
+**Complex features:**
+- Consider using EnterPlanMode first to design approach
+- Generate scaffold with TODOs if implementation is unclear
 
 

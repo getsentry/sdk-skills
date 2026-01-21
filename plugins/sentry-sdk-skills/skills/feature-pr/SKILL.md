@@ -101,32 +101,13 @@ gh api repos/$REPO/commits/<COMMIT_SHA> --jq '{message: .commit.message, author:
 
 ### Step 3: Build PR Title
 
-Follow Sentry commit message conventions:
+Follow Sentry conventions: `<type>(<scope>): <description>`
 
-**Format:** `<type>(<scope>): <description>`
+- **Type**: feat, fix, ref, test, docs
+- **Scope**: SDK name (python, go, javascript, etc.)
+- **Description**: Imperative mood ("Implement" not "Implements")
 
-**Type:**
-- `feat` - New feature
-- `fix` - Bug fix
-- `ref` - Refactoring
-- `test` - Test additions/changes
-- `docs` - Documentation only
-
-**Scope:**
-- SDK name or component (e.g., `python`, `tracing`, `core`)
-
-**Description:**
-- Brief summary (imperative mood)
-- "Implement" not "Implements", "Add" not "Added"
-
-**Example titles:**
-```
-feat(python): Implement strict trace continuation
-feat(go): Add queue time capture
-feat(javascript): Support org ID in baggage
-```
-
-Extract feature name from context or commit message, generate appropriate title.
+Example: `feat(python): Implement strict trace continuation`
 
 ### Step 4: Build PR Body
 
@@ -163,42 +144,6 @@ Create PR description following this structure:
 ## SDK-Specific Notes
 
 <Any deviations from reference implementation or SDK-specific considerations>
-```
-
-**Example PR body:**
-
-```markdown
-## Summary
-
-Implements Strict Trace Continuation to prevent trace propagation across different Sentry organizations.
-
-This PR aligns the Python SDK with the Strict Trace Continuation specification. When enabled via `strict_trace_continuation` option, the SDK will compare the organization ID from incoming trace headers against the configured organization and block trace continuation if they don't match.
-
-## Implementation Details
-
-- Adds `should_continue_trace()` function to check org ID matching
-- Implements DSN parsing to extract organization ID
-- Adds `strict_trace_continuation` and `org` configuration options
-- Integrates org ID check into trace propagation logic
-- Propagates org ID in `sentry-org` baggage entry
-
-## References
-
-- **Develop Doc**: https://github.com/getsentry/sentry-docs/pull/11912
-- **Reference Implementation**: https://github.com/getsentry/sentry-javascript/pull/16313
-- **Linear Issue**: https://linear.app/getsentry/issue/GSD-1234
-- **Alignment Scope**: Core
-
-## Testing
-
-- Unit tests for org ID parsing from DSN
-- Unit tests for trace continuation decision logic
-- Integration tests for trace propagation with org matching
-- Tests for baggage header propagation
-
-## SDK-Specific Notes
-
-Python implementation uses type comments for Python 2.7 compatibility. The `_parse_org_from_dsn()` helper function uses regex matching following existing DSN parsing patterns in the SDK.
 ```
 
 ### Step 5: Invoke sentry-skills:create-pr
