@@ -42,9 +42,13 @@ Ask user for:
 ```
 User: /sdk-align-pipeline https://github.com/getsentry/sentry-docs/pull/11912
 
-Or:
+Or provide the develop doc URL and reference implementation when prompted:
 
-User: /sdk-align-pipeline https://github.com/getsentry/sentry-docs/pull/11912 --reference javascript#16313
+User: /sdk-align-pipeline
+Skill: What is the develop doc URL?
+User: https://github.com/getsentry/sentry-docs/pull/11912
+Skill: Which SDK has the reference implementation? (optional)
+User: javascript PR #16313
 ```
 
 ### Step 2: Run Status Check
@@ -226,10 +230,12 @@ If Linear tracking was created, update the issue with PR links:
 ```
 Updating Linear issue with PR links...
 
-Invoking sdk-linear-track --update-issue GSD-1234...
+Invoking sdk-linear-track to update issue GSD-1234 with PR links...
 
 ✅ Linear issue updated with 3 PR links
 ```
+
+The sdk-linear-track skill will read PR links from `.sdk-align/prs.json` and add them to the Linear issue.
 
 ### Step 8: Final Summary
 
@@ -374,23 +380,22 @@ Java   ████████░░░░░░░░░░░░  40% (genera
 
 ### Resuming Failed Runs
 
-If pipeline fails mid-run, user can resume:
+If pipeline fails mid-run, the skill can detect and resume from the partial state:
+
+When invoked again, check for `.sdk-align/` directory with partial context. If found, inform the user:
 
 ```
-User: /sdk-align-pipeline --resume
-
-Skill:
-Detected partial run in .sdk-align/ directory:
+Detected partial run from previous execution:
   ✅ Status check completed
   ✅ Linear tracking created (GSD-1234)
   ✅ 2/4 implementations generated (Ruby, Go)
   ❌ Java generation failed
   ⏳ .NET not started
 
-Resume from Java? (y/n)
+Would you like to resume from where we left off?
 ```
 
-Read context from `.sdk-align/` and resume from last successful step.
+If user confirms, read context from `.sdk-align/` and resume from last successful step.
 
 ## Example Workflows
 
@@ -432,32 +437,10 @@ User: /sdk-align-pipeline https://github.com/getsentry/sentry-docs/pull/11912
 2. User selects: "All 14 SDKs"
 3. Implementations generated for 10/14
 4. Go generation fails (auth error)
-5. User fixes auth, runs:
-   /sdk-align-pipeline --resume
-6. Pipeline resumes from failed SDK
-7. Completes remaining SDKs
-```
-
-## Advanced Options
-
-**Command-line style arguments:**
-
-```
---reference <sdk>#<pr-num>   Specify reference implementation
---sdks <list>                 Specific SDKs to implement
---skip-linear                 Don't create Linear tracking
---skip-pr                     Don't create PRs (generation only)
---resume                      Resume from partial run
---dry-run                     Show what would be done, don't execute
-```
-
-**Examples:**
-```
-/sdk-align-pipeline https://github.com/getsentry/sentry-docs/pull/11912 --reference javascript#16313 --sdks python,go,ruby
-
-/sdk-align-pipeline https://github.com/getsentry/sentry-docs/pull/11912 --skip-pr
-
-/sdk-align-pipeline --resume
+5. User fixes auth, asks: "Can you resume and complete the remaining SDKs?"
+6. Skill detects partial run in .sdk-align/ directory
+7. Pipeline resumes from failed SDK
+8. Completes remaining SDKs
 ```
 
 ## References
