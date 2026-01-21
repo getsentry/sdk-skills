@@ -406,9 +406,3 @@ User sees:
 
   View PR: https://github.com/getsentry/sentry-python/pull/9999
 ```
-
-## References
-
-- [Sentry Code Review Guidelines](https://develop.sentry.dev/engineering-practices/code-review/)
-- [Sentry Commit Messages](https://develop.sentry.dev/engineering-practices/commit-messages/)
-- [GitHub CLI PR Documentation](https://cli.github.com/manual/gh_pr_create)
