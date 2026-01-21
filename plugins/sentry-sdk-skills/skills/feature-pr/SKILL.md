@@ -2,7 +2,7 @@
 name: sdk-feature-pr
 description: Create pull request for ONE Sentry SDK with proper links to develop docs, reference implementation, and Linear issue. Uses sentry-skills:create-pr for Sentry conventions. Works standalone or with context from other sdk-* skills.
 model: sonnet
-allowed-tools: Read Bash Skill AskUserQuestion
+allowed-tools: Read Write Bash Skill AskUserQuestion
 compatibility: Requires gh CLI and sentry-skills:create-pr skill.
 ---
 

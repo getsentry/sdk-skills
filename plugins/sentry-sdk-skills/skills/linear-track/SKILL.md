@@ -2,13 +2,20 @@
 name: sdk-linear-track
 description: Create or update Linear project and issue for SDK feature alignment tracking. Links to "SDK Projects to Align Across SDKs" initiative, tracks implementation progress across SDKs, and updates with PR links. Requires Linear MCP server.
 model: sonnet
-allowed-tools: Read Write Bash AskUserQuestion TodoWrite
-compatibility: Requires Linear MCP server configured and authenticated.
+# Linear MCP tools (from linear-server MCP): query_data, create_project, create_issue, update_issue, create_comment
+allowed-tools: Read Write Bash AskUserQuestion TodoWrite mcp__linear-server__query_data mcp__linear-server__create_project mcp__linear-server__create_issue mcp__linear-server__update_issue mcp__linear-server__create_comment
+compatibility: Requires Linear MCP server (https://github.com/linear/linear-mcp) configured in Claude Code settings
 ---
 
 # SDK Linear Tracking
 
 Create and manage Linear projects and issues for SDK feature alignment work.
+
+## Requirements
+
+This skill requires the Linear MCP server to be configured. The tools prefixed with `mcp__linear-server__` are provided by the Linear MCP server integration.
+
+**Setup**: Install and configure the Linear MCP server following the instructions at https://github.com/linear/linear-mcp. Once configured, the Linear tools will be automatically available to this skill.
 
 ## When to Use This Skill
 
