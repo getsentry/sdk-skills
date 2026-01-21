@@ -155,152 +155,44 @@ cat pyproject.toml | grep -A10 "\[tool.ruff\]" 2>/dev/null
 
 ### Step 5: Generate Idiomatic Implementation
 
-Based on reference implementation + target SDK patterns, generate code:
+Based on reference implementation + target SDK patterns, generate idiomatic code:
 
 #### Core Implementation Files
 
-Adapt reference implementation to target SDK:
+Analyze the reference implementation and adapt it to the target SDK's conventions:
 
-**Example: Python (from JavaScript reference)**
+**Naming conventions:**
+- Study existing files in the target SDK (use Glob/Grep to find similar features)
+- Follow the SDK's naming patterns (e.g., snake_case for Python, camelCase for JavaScript)
+- Match function/class naming style from similar features
 
-JavaScript reference:
-```javascript
-// packages/core/src/tracing/strictTrace.ts
-export function shouldContinueTrace(incomingOrg?: string): boolean {
-  const options = getClient()?.getOptions();
-  if (!options?.strictTraceContinuation) {
-    return true;
-  }
+**Type systems:**
+- Use the SDK's type annotation approach (type hints for Python, TypeScript types for JS, etc.)
+- Study existing code to understand how types are documented
 
-  const configuredOrg = options.org || parseOrgFromDsn(options.dsn);
-  return incomingOrg === configuredOrg;
-}
-```
+**File structure:**
+- Place files in locations consistent with similar features
+- Match the SDK's organization (e.g., feature modules, utilities, configuration)
 
-Python adaptation:
-```python
-# sentry_sdk/tracing/strict_trace.py
-def should_continue_trace(incoming_org=None):
-    # type: (Optional[str]) -> bool
-    """
-    Determine if trace should be continued based on org ID.
-
-    Args:
-        incoming_org: Organization ID from incoming baggage
-
-    Returns:
-        True if trace should be continued, False otherwise
-    """
-    client = sentry_sdk.get_client()
-    options = client.options if client else {}
-
-    if not options.get("strict_trace_continuation", False):
-        return True
-
-    configured_org = options.get("org") or _parse_org_from_dsn(options.get("dsn"))
-    return incoming_org == configured_org
-
-
-def _parse_org_from_dsn(dsn):
-    # type: (Optional[str]) -> Optional[str]
-    """Extract org ID from DSN (e.g., 'o1' from 'https://key@o1.ingest.sentry.io/project')."""
-    if not dsn:
-        return None
-
-    import re
-    match = re.search(r'@(o\d+)\.', dsn)
-    return match.group(1) if match else None
-```
-
-Key adaptations:
-- **Naming**: `shouldContinueTrace` → `should_continue_trace`
-- **Type hints**: JSDoc → Python type comments
-- **Docstrings**: Added Python docstring format
-- **Idioms**: Used Python's `get()` method, optional parameters
+**Documentation:**
+- Add comments/docstrings matching the SDK's style
+- Study existing functions to see docstring format
 
 #### Configuration/Options
 
-Add config option to SDK's configuration:
-
-**Python** (`sentry_sdk/consts.py` or similar):
-```python
-# Add to default options
-DEFAULT_OPTIONS = {
-    # ... existing options ...
-    "strict_trace_continuation": False,
-    "org": None,
-}
-```
-
-**JavaScript** (`packages/types/src/options.ts`):
-```typescript
-export interface ClientOptions {
-  // ... existing options ...
-  strictTraceContinuation?: boolean;
-  org?: string;
-}
-```
+Identify configuration options from the develop doc and reference implementation. Add them to the SDK's configuration system by:
+- Finding where options are defined (use Grep to search for "options", "config", etc.)
+- Adding new options following existing patterns
+- Setting appropriate defaults
 
 #### Tests
 
-Generate tests mirroring reference implementation tests:
-
-**JavaScript reference test**:
-```javascript
-describe('strictTraceContinuation', () => {
-  it('continues trace when disabled', () => {
-    const result = shouldContinueTrace('o123');
-    expect(result).toBe(true);
-  });
-
-  it('blocks trace when org mismatch', () => {
-    setOptions({ strictTraceContinuation: true, org: 'o456' });
-    const result = shouldContinueTrace('o123');
-    expect(result).toBe(false);
-  });
-});
-```
-
-**Python adaptation**:
-```python
-# tests/test_strict_trace.py
-import pytest
-from sentry_sdk.tracing.strict_trace import should_continue_trace
-
-
-def test_continues_trace_when_disabled(sentry_init):
-    """Trace continues when strict_trace_continuation is False (default)."""
-    sentry_init()
-    assert should_continue_trace("o123") is True
-
-
-def test_blocks_trace_when_org_mismatch(sentry_init):
-    """Trace blocked when org IDs don't match."""
-    sentry_init(strict_trace_continuation=True, org="o456")
-    assert should_continue_trace("o123") is False
-
-
-def test_continues_trace_when_org_matches(sentry_init):
-    """Trace continues when org IDs match."""
-    sentry_init(strict_trace_continuation=True, org="o123")
-    assert should_continue_trace("o123") is True
-
-
-def test_parses_org_from_dsn(sentry_init):
-    """Org ID parsed from DSN if not explicitly configured."""
-    sentry_init(
-        dsn="https://key@o789.ingest.sentry.io/123",
-        strict_trace_continuation=True
-    )
-    assert should_continue_trace("o789") is True
-    assert should_continue_trace("o999") is False
-```
-
-Key adaptations:
-- **Framework**: jest → pytest
-- **Assertions**: `expect().toBe()` → `assert ... is ...`
-- **Fixtures**: Used pytest `sentry_init` fixture
-- **Test names**: Descriptive Python function names
+Generate comprehensive tests that mirror the reference implementation's test coverage:
+- Identify the test framework used (pytest, jest, rspec, junit, etc.)
+- Match test file naming conventions (e.g., `test_*.py`, `*.test.ts`, `*_spec.rb`)
+- Follow assertion patterns used in existing tests
+- Cover the same scenarios as the reference implementation
+- Use SDK-specific test fixtures and helpers
 
 ### Step 6: Run Linting and Tests
 
@@ -524,41 +416,22 @@ Mark each step as in_progress when starting and completed when finished. This he
 
 ### Language-Specific Notes
 
-**Python:**
-- Use type hints (PEP 484)
-- Follow PEP 8 naming conventions
-- Use `black` for formatting (line length 88)
-- Tests with pytest, use fixtures
+When generating code, study the target SDK's existing code to understand conventions. Claude already knows language idioms - focus on SDK-specific patterns:
 
-**JavaScript/TypeScript:**
-- Use TypeScript types for all new code
-- Follow existing ESLint rules
-- Use jest or vitest for tests
-- Prefer async/await over promises
+**Key areas to analyze:**
+- Naming conventions (found via Grep/Glob on similar features)
+- Linting tools and configuration files (`.eslintrc`, `pyproject.toml`, `.rubocop.yml`, etc.)
+- Test framework and patterns (look at existing test files)
+- Type annotation style (if applicable)
+- Error handling patterns
 
-**Go:**
-- Follow Go conventions (gofmt, golint)
-- Exported names start with uppercase
-- Use table-driven tests
-- Error handling: return errors, don't panic
-
-**Ruby:**
-- Follow RuboCop rules
-- Use `snake_case` everywhere
-- RSpec for tests with `describe`/`context`/`it`
-- Use idiomatic Ruby (blocks, enumerables)
-
-**Java:**
-- Follow Google Java Style
-- Use JUnit for tests
-- Proper exception handling
-- Use Optional for nullable values
-
-**C#/.NET:**
-- Follow C# conventions
-- Use async/await for async code
-- xUnit or NUnit for tests
-- LINQ where appropriate
+**Common tooling by language:**
+- Python: black, ruff, mypy, pytest
+- JavaScript/TypeScript: eslint, prettier, jest/vitest
+- Go: gofmt, golangci-lint, standard testing package
+- Ruby: rubocop, rspec
+- Java: checkstyle, junit
+- C#/.NET: dotnet format, xunit/nunit
 
 ## Example Workflow
 
