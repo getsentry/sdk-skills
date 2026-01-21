@@ -1,9 +1,9 @@
 ---
 name: sdk-feature-status
-description: Check SDK feature implementation status across all Sentry SDKs. Analyzes develop docs, finds reference implementations, and reports which SDKs have implemented, need updates, or are missing the feature. Creates shared context for other sdk-* skills.
-model: sonnet
+description: Check which Sentry SDKs have a feature and which need it. Use when auditing SDK status, checking implementation progress, or starting SDK alignment. Keywords: check status, which SDKs, SDK alignment, feature status.
+argument-hint: [develop-doc-url]
 allowed-tools: Read Grep Glob Bash Write AskUserQuestion TodoWrite
-compatibility: Requires gh CLI (GitHub CLI) with authentication configured.
+compatibility: Requires gh CLI with authentication.
 ---
 
 # SDK Feature Status Checker
@@ -32,25 +32,7 @@ Other `sdk-*` skills can read this context to work together seamlessly.
 
 ## SDK to Repository Mapping
 
-- `python` → `getsentry/sentry-python`
-- `javascript` → `getsentry/sentry-javascript`
-- `ruby` → `getsentry/sentry-ruby`
-- `php` → `getsentry/sentry-php`
-- `go` → `getsentry/sentry-go`
-- `java` → `getsentry/sentry-java`
-- `dotnet` → `getsentry/sentry-dotnet`
-- `rust` → `getsentry/sentry-rust`
-- `android` → `getsentry/sentry-java`
-- `cocoa` → `getsentry/sentry-cocoa`
-- `react-native` → `getsentry/sentry-react-native`
-- `flutter` → `getsentry/sentry-dart`
-- `unity` → `getsentry/sentry-unity`
-- `unreal` → `getsentry/sentry-unreal`
-- `native` → `getsentry/sentry-native`
-- `elixir` → `getsentry/sentry-elixir`
-- `perl` → `getsentry/sentry-perl`
-- `clojure` → `getsentry/sentry-clj`
-- `kotlin` → `getsentry/sentry-kotlin-multiplatform`
+See [references/sdk-mappings.md](references/sdk-mappings.md) for complete SDK to repository mapping (17 SDKs total).
 
 ## Process
 
@@ -150,10 +132,10 @@ Collect metadata:
 Based on the develop doc's alignment scope, filter applicable SDKs:
 
 **Core Scope:**
-- All SDKs with distributed tracing support (all except maybe perl, clojure if unmaintained)
+- All SDKs with distributed tracing support (typically all SDKs)
 
 **Domain Scope:**
-- **Backend**: python, ruby, php, go, java, dotnet, elixir, rust, perl, clojure
+- **Backend**: python, ruby, php, go, java, dotnet, elixir, rust
 - **Frontend**: javascript (browser), react-native
 - **Mobile**: android, cocoa, flutter, react-native
 - **Universal**: Features that apply across domains
@@ -166,40 +148,11 @@ Mark SDKs as "Not Applicable" if they don't match the scope.
 
 ### Step 5: Generate Status Report
 
-Create a formatted status table:
-
-```
-SDK Feature Status Report
-=========================
-Feature: <Feature Name>
-Develop Doc: <URL>
-Reference: <SDK> (<PR URL>)
-Alignment Scope: <Core|Domain|Platform>
-
-Implementation Status:
-─────────────────────────────────────────────────────────────
-SDK              Status              Details
-─────────────────────────────────────────────────────────────
-javascript       ✅ Implemented      PR #16313 (merged 2025-07-25)
-python           ✅ Implemented      PR #5178 (merged 2025-12-01)
-php              ⚠️  Needs Review     PR #1875 (open)
-ruby             ❌ Not Implemented  No implementation found
-go               ❌ Not Implemented  No implementation found
-java             ❌ Not Implemented  No implementation found
-dotnet           ❌ Not Implemented  No implementation found
-...
-─────────────────────────────────────────────────────────────
-
-Summary:
-  ✅ Implemented: 2 SDKs
-  ⚠️  Needs Review: 1 SDK
-  ❌ Not Implemented: 14 SDKs
-  🚫 Not Applicable: 2 SDKs
-
-SDKs needing implementation (14):
-  ruby, go, java, dotnet, rust, android, cocoa, react-native,
-  flutter, unity, unreal, native, elixir, kotlin
-```
+Create a formatted status table showing:
+- Feature name, develop doc URL, reference SDK/PR, alignment scope
+- Implementation status for each SDK (✅ Implemented, ⚠️ Needs Review, ❌ Not Implemented, 🚫 Not Applicable)
+- Summary counts
+- List of SDKs needing implementation
 
 Display this table to the user.
 
@@ -207,73 +160,9 @@ Display this table to the user.
 
 Create `.sdk-align/` directory and write context files:
 
-**`.sdk-align/context.json`:**
-```json
-{
-  "version": "1.0",
-  "feature": {
-    "name": "Strict Trace Propagation",
-    "developDoc": {
-      "url": "https://github.com/getsentry/sentry-docs/pull/11912",
-      "commit": "399f5292fdf53a0b78f7de01978c7b329d2ab717",
-      "pr": 11912
-    },
-    "referenceImplementation": {
-      "sdk": "javascript",
-      "pr": "https://github.com/getsentry/sentry-javascript/pull/16313",
-      "prNumber": 16313,
-      "mergedAt": "2025-07-25T11:32:54Z"
-    },
-    "alignmentScope": "Core",
-    "configOptions": ["strictTraceContinuation", "org"],
-    "linearIssue": null
-  },
-  "generatedAt": "2026-01-17T23:45:00Z",
-  "generatedBy": "sdk-feature-status"
-}
-```
+**`.sdk-align/context.json`** - Feature metadata including name, develop doc details, reference implementation, alignment scope, config options, and Linear issue.
 
-**`.sdk-align/status-report.json`:**
-```json
-{
-  "version": "1.0",
-  "feature": "Strict Trace Propagation",
-  "generatedAt": "2026-01-17T23:45:00Z",
-  "summary": {
-    "total": 19,
-    "implemented": 2,
-    "needsReview": 1,
-    "notImplemented": 14,
-    "notApplicable": 2
-  },
-  "sdks": {
-    "javascript": {
-      "status": "implemented",
-      "pr": "https://github.com/getsentry/sentry-javascript/pull/16313",
-      "prNumber": 16313,
-      "mergedAt": "2025-07-25T11:32:54Z",
-      "isReference": true
-    },
-    "python": {
-      "status": "implemented",
-      "pr": "https://github.com/getsentry/sentry-python/pull/5178",
-      "prNumber": 5178,
-      "mergedAt": "2025-12-01T16:08:16Z"
-    },
-    "php": {
-      "status": "needs_review",
-      "pr": "https://github.com/getsentry/sentry-php/pull/1875",
-      "prNumber": 1875,
-      "state": "open",
-      "notes": "PR open since 2025-08-11"
-    },
-    "go": {
-      "status": "not_implemented",
-      "needsImplementation": true
-    }
-  }
-}
-```
+**`.sdk-align/status-report.json`** - Status for each SDK including implementation state, PR links, merge dates, and notes.
 
 Inform user that context has been saved for other `sdk-*` skills.
 

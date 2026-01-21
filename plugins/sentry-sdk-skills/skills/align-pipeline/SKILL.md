@@ -1,9 +1,9 @@
 ---
 name: sdk-align-pipeline
-description: Orchestrator skill that runs the complete SDK feature alignment workflow end-to-end. Checks status, creates Linear tracking, generates code for selected SDKs, and creates PRs. Coordinates sdk-feature-status, linear-initiative, sdk-feature-generate, and sdk-feature-pr skills.
-model: sonnet
+description: Align a feature across multiple Sentry SDKs automatically. Use when implementing a feature in many SDKs, rolling out alignment, or running full SDK workflow. Keywords: align SDKs, implement across SDKs, SDK workflow, multiple SDKs.
+argument-hint: [develop-doc-url]
 allowed-tools: Read Write Bash Skill AskUserQuestion TodoWrite
-compatibility: Requires all sdk-* skills, gh CLI, Linear MCP, and SDK-specific tooling.
+compatibility: Requires sdk-* skills, gh CLI, optional Linear MCP.
 ---
 
 # SDK Alignment Pipeline Orchestrator

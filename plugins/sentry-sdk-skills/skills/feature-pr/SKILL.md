@@ -1,9 +1,9 @@
 ---
 name: sdk-feature-pr
-description: Create pull request for ONE Sentry SDK with proper links to develop docs, reference implementation, and Linear issue. Uses sentry-skills:create-pr for Sentry conventions. Works standalone or with context from other sdk-* skills.
-model: sonnet
+description: Create GitHub pull request for a Sentry SDK. Use when creating PR, pull request, or merging SDK code. Keywords: PR, pull request, create PR, SDK, github.
+argument-hint: [sdk-name]
 allowed-tools: Read Write Bash Skill AskUserQuestion
-compatibility: Requires gh CLI and sentry-skills:create-pr skill.
+compatibility: Requires gh CLI.
 ---
 
 # SDK Feature PR Creator
@@ -27,22 +27,7 @@ This skill can:
 
 ## SDK to Repository Mapping
 
-- `python` → `getsentry/sentry-python`
-- `javascript` → `getsentry/sentry-javascript`
-- `ruby` → `getsentry/sentry-ruby`
-- `php` → `getsentry/sentry-php`
-- `go` → `getsentry/sentry-go`
-- `java` → `getsentry/sentry-java`
-- `dotnet` → `getsentry/sentry-dotnet`
-- `rust` → `getsentry/sentry-rust`
-- `android` → `getsentry/sentry-java`
-- `cocoa` → `getsentry/sentry-cocoa`
-- `react-native` → `getsentry/sentry-react-native`
-- `flutter` → `getsentry/sentry-dart`
-- `unity` → `getsentry/sentry-unity`
-- `unreal` → `getsentry/sentry-unreal`
-- `native` → `getsentry/sentry-native`
-- `elixir` → `getsentry/sentry-elixir`
+See [../feature-status/references/sdk-mappings.md](../feature-status/references/sdk-mappings.md) for complete SDK to repository mapping (17 SDKs).
 
 ## Process
 
@@ -74,30 +59,13 @@ Ask user for:
 
 ### Step 2: Verify Branch State
 
-Check that the branch exists and is pushed to remote:
-
-```bash
-# Get SDK repo
-REPO=$(get_repo_for_sdk <SDK>)
-
-# Check if branch exists on remote
-gh api repos/$REPO/branches/<BRANCH_NAME> --jq '.name'
-```
+Check that the branch exists and is pushed to remote using `gh api repos/$REPO/branches/<BRANCH_NAME>`.
 
 **If branch doesn't exist on remote:**
 - Check if it exists locally in implementations.json
 - If `pushed: false`, ask user if they want to push it
 - If yes: `git push -u origin <branch-name>`
 - If no: Cannot create PR, branch must be pushed first
-
-**Get branch details:**
-```bash
-# Get latest commit on branch
-gh api repos/$REPO/branches/<BRANCH_NAME> --jq '.commit.sha'
-
-# Get commit details
-gh api repos/$REPO/commits/<COMMIT_SHA> --jq '{message: .commit.message, author: .commit.author.name}'
-```
 
 ### Step 3: Build PR Title
 
@@ -189,27 +157,7 @@ EOF
 
 ### Step 6: Track Created PR
 
-Write PR details to `.sdk-align/prs.json`:
-
-```json
-{
-  "version": "1.0",
-  "prs": {
-    "python": {
-      "sdk": "python",
-      "feature": "Strict Trace Propagation",
-      "pr": "https://github.com/getsentry/sentry-python/pull/9999",
-      "prNumber": 9999,
-      "branch": "feat/strict-trace-continuation",
-      "state": "open",
-      "createdAt": "2026-01-18T00:30:00Z",
-      "developDoc": "https://github.com/getsentry/sentry-docs/pull/11912",
-      "referenceImplementation": "https://github.com/getsentry/sentry-javascript/pull/16313",
-      "linearIssue": "GSD-1234"
-    }
-  }
-}
-```
+Write PR details to `.sdk-align/prs.json` with: sdk name, feature, PR URL/number, branch, state, timestamps, and links to develop doc, reference implementation, and Linear issue.
 
 Update or create this file with the new PR.
 
@@ -298,28 +246,10 @@ Show the PR URL prominently so user can click to view.
 
 ### Multi-SDK PR Creation
 
-If user wants to create PRs for multiple SDKs at once:
-
-```bash
-# User: /sdk-feature-pr python,go,java
-```
-
-Process each SDK sequentially:
+If user wants to create PRs for multiple SDKs at once, process each SDK sequentially:
 1. Read implementation for each SDK
 2. Verify branch state for each
 3. Create PR for each
 4. Track all PRs
-5. Display summary table
-
-**Summary output for multiple PRs:**
-```
-PRs Created:
-────────────────────────────────────────────────────────────
-SDK         PR Number    Status    URL
-────────────────────────────────────────────────────────────
-python      #9999        ✅ Open   https://github.com/.../9999
-go          #8888        ✅ Open   https://github.com/.../8888
-java        #7777        ✅ Open   https://github.com/.../7777
-────────────────────────────────────────────────────────────
-```
+5. Display summary with PR numbers and URLs
 

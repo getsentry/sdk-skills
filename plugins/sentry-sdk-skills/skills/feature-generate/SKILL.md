@@ -1,9 +1,9 @@
 ---
 name: sdk-feature-generate
-description: Generate idiomatic implementation code for ONE Sentry SDK based on develop docs and reference implementation. Analyzes SDK patterns, follows conventions, generates tests, runs linting, and commits changes. Works standalone or with context from sdk-feature-status.
-model: sonnet
+description: Generate code for a Sentry SDK. Use when implementing a feature in python, javascript, go, ruby, java, or other SDKs. Keywords: implement, generate, code, SDK, feature.
+argument-hint: [sdk-name]
 allowed-tools: Read Grep Glob Bash Write Edit Task TodoWrite
-compatibility: Requires gh CLI, git, and SDK-specific linting tools (black/ruff for Python, eslint for JS, etc.).
+compatibility: Requires gh CLI, git, and SDK-specific linting tools.
 ---
 
 # SDK Feature Code Generator
@@ -49,22 +49,7 @@ This skill can:
 
 ## SDK to Repository Mapping
 
-- `python` → `getsentry/sentry-python`
-- `javascript` → `getsentry/sentry-javascript`
-- `ruby` → `getsentry/sentry-ruby`
-- `php` → `getsentry/sentry-php`
-- `go` → `getsentry/sentry-go`
-- `java` → `getsentry/sentry-java`
-- `dotnet` → `getsentry/sentry-dotnet`
-- `rust` → `getsentry/sentry-rust`
-- `android` → `getsentry/sentry-java`
-- `cocoa` → `getsentry/sentry-cocoa`
-- `react-native` → `getsentry/sentry-react-native`
-- `flutter` → `getsentry/sentry-dart`
-- `unity` → `getsentry/sentry-unity`
-- `unreal` → `getsentry/sentry-unreal`
-- `native` → `getsentry/sentry-native`
-- `elixir` → `getsentry/sentry-elixir`
+See [../feature-status/references/sdk-mappings.md](../feature-status/references/sdk-mappings.md) for complete SDK to repository mapping (17 SDKs).
 
 ## Process
 
@@ -220,30 +205,7 @@ Otherwise, just commit locally.
 
 ### Step 9: Update Implementations Context
 
-Write implementation details to `.sdk-align/implementations.json`:
-
-```json
-{
-  "version": "1.0",
-  "implementations": {
-    "python": {
-      "sdk": "python",
-      "feature": "Strict Trace Propagation",
-      "branch": "feat/strict-trace-continuation",
-      "commit": "abc123def456",
-      "filesChanged": [
-        "sentry_sdk/tracing/strict_trace.py",
-        "sentry_sdk/consts.py",
-        "tests/test_strict_trace.py"
-      ],
-      "pushed": false,
-      "generatedAt": "2026-01-18T00:15:00Z",
-      "lintingPassed": true,
-      "testsPassed": true
-    }
-  }
-}
-```
+Write implementation details to `.sdk-align/implementations.json` including: SDK name, feature, branch, commit SHA, files changed, pushed status, generation timestamp, and linting/test results.
 
 Update or create this file with the new implementation.
 
@@ -259,10 +221,7 @@ Display to user:
 - Pushed: Yes/No
 - Context saved to `.sdk-align/implementations.json`
 
-Suggest next step:
-```
-Next: Run /sdk-feature-pr python to create a pull request
-```
+Suggest next step: Run `/sdk-feature-pr <sdk>` to create a pull request
 
 ## Guidelines
 
