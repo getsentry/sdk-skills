@@ -189,6 +189,13 @@ Create `.sdk-align/` directory and write context files:
 }
 ```
 
+**Use Write tool to create both files:**
+- Create `.sdk-align/` directory in current working directory (if needed)
+- Write `.sdk-align/context.json`
+- Write `.sdk-align/status-report.json`
+
+**Important**: The `.sdk-align/` directory is created in the current working directory. Other skills will look for it in the same location, so run all SDK alignment commands from the same directory.
+
 Inform user that context has been saved for other `sdk-*` skills.
 
 ## Output

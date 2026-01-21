@@ -64,9 +64,11 @@ See [../../references/sdk-mappings.md](../../references/sdk-mappings.md) for com
 - Branch name (auto-generates if not provided: `feat/<feature-slug>`)
 - Push to remote (default: false, just commit locally)
 
+**Important**: Save the current working directory path for later use - all `.sdk-align/` file operations should use this directory, not the SDK repository directory.
+
 **If context file exists:**
 
-Use the Read tool to check for and read `.sdk-align/context.json`.
+Use the Read tool to check for and read `.sdk-align/context.json` in current directory.
 
 Extract feature name, develop doc, and reference implementation from context.
 
@@ -185,6 +187,8 @@ If not pushed, warn: "Remember to push before creating PR with /sdk-feature-pr"
 
 ### Step 9: Update Implementations Context
 
+**Note**: Ensure writing to `.sdk-align/implementations.json` in the original working directory (where feature-status was run), not the SDK repository directory.
+
 Write implementation details to `.sdk-align/implementations.json`:
 
 ```json
@@ -206,7 +210,9 @@ Write implementation details to `.sdk-align/implementations.json`:
 }
 ```
 
-Update or create this file with the new implementation. If file exists, append to the `implementations` array.
+**Use Write tool to update or create this file:**
+- If file doesn't exist: Write new file with single-item array
+- If file exists: Read it, parse JSON, append to `implementations` array, write back
 
 ### Step 10: Create Pull Request (Optional)
 

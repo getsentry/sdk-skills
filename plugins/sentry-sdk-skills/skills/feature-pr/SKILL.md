@@ -37,9 +37,11 @@ See [../../references/sdk-mappings.md](../../references/sdk-mappings.md) for com
 **Required input:**
 - Target SDK (e.g., "python", "go")
 
+**Important**: Save the current working directory path for later use - all `.sdk-align/` file operations should use this directory, not the SDK repository directory.
+
 **Read from shared context:**
 
-Use the Read tool to check for and read:
+Use the Read tool to check for and read (in current directory):
 - `.sdk-align/context.json` (feature context: develop doc, reference PR, Linear issue)
 - `.sdk-align/implementations.json` (implementation details: branch, repo path, feature name)
 - `.sdk-align/prs.json` (check if PR already created)
@@ -60,7 +62,7 @@ Navigate to repository:
 Verify and switch to correct branch:
 - Check current branch: `git branch --show-current`
 - If not on expected branch: `git checkout <branch-name>`
-- If branch doesn't exist: Error - branch should exist from feature-generate
+- If branch doesn't exist: Error - implementation branch not found, check branch name
 
 ### Step 3: Invoke sentry-skills:create-pr
 
@@ -82,7 +84,7 @@ Display message: "The sentry-skills plugin with create-pr skill is required. Ple
 
 ### Step 4: Track Created PR
 
-After PR is created successfully, write details to `.sdk-align/prs.json`:
+After PR is created successfully, write details to `.sdk-align/prs.json` in the original working directory (saved in Step 1):
 
 ```json
 {
@@ -105,7 +107,9 @@ After PR is created successfully, write details to `.sdk-align/prs.json`:
 }
 ```
 
-Update or create this file with the new PR. If file exists, append to the `prs` array.
+**Use Write tool to update or create this file:**
+- If file doesn't exist: Write new file with single-item array
+- If file exists: Read it, parse JSON, append to `prs` array, write back
 
 ### Step 5: Update Linear Issue (Optional)
 

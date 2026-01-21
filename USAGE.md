@@ -1,5 +1,7 @@
 # Usage Guide
 
+**Important**: Run all SDK alignment commands from the same directory. The `.sdk-align/` context directory is created in your current working directory and shared across all skills.
+
 ## Aligning a Feature Across SDKs
 
 **Step 1: Check implementation status**
