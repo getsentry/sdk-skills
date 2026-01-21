@@ -18,6 +18,28 @@ Use this skill when:
 - You want idiomatic, linted code following SDK conventions
 - You're working through SDK alignment one SDK at a time
 
+## Planning Complex Implementations
+
+For complex or unfamiliar features, consider using EnterPlanMode before generating code:
+
+**Use EnterPlanMode when:**
+- The feature involves significant architectural changes
+- You're unfamiliar with the target SDK's codebase structure
+- Multiple approaches are possible and you need to design the best one
+- The feature touches many files or subsystems
+
+**In plan mode, you can:**
+- Thoroughly explore the target SDK's codebase
+- Study similar existing features
+- Design the implementation approach
+- Identify all files that need changes
+- Get user approval on the approach before writing code
+
+**Skip plan mode when:**
+- The feature is straightforward and well-defined
+- You've already explored the SDK in a previous step
+- The reference implementation provides a clear pattern to follow
+
 ## Shared Context System
 
 This skill can:
