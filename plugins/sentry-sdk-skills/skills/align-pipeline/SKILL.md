@@ -1,6 +1,6 @@
 ---
 name: sdk-align-pipeline
-description: Orchestrator skill that runs the complete SDK feature alignment workflow end-to-end. Checks status, creates Linear tracking, generates code for selected SDKs, and creates PRs. Coordinates sdk-feature-status, sdk-linear-track, sdk-feature-generate, and sdk-feature-pr skills.
+description: Orchestrator skill that runs the complete SDK feature alignment workflow end-to-end. Checks status, creates Linear tracking, generates code for selected SDKs, and creates PRs. Coordinates sdk-feature-status, linear-initiative, sdk-feature-generate, and sdk-feature-pr skills.
 model: sonnet
 allowed-tools: Read Write Bash Skill AskUserQuestion TodoWrite
 compatibility: Requires all sdk-* skills, gh CLI, Linear MCP, and SDK-specific tooling.
@@ -23,7 +23,7 @@ Use this skill when:
 This orchestrator coordinates all SDK alignment skills:
 
 1. **`sdk-feature-status`** - Check implementation status across all SDKs
-2. **`sdk-linear-track`** - Create Linear project and issue for tracking
+2. **`linear-initiative`** - Create Linear projects for selected SDK teams
 3. **`sdk-feature-generate`** - Generate code for each selected SDK
 4. **`sdk-feature-pr`** - Create PRs for each implementation
 
@@ -123,28 +123,32 @@ Continue with 4 selected SDKs? (y/n)
 
 ### Step 4: Create Linear Tracking
 
-Ask user if they want to create Linear tracking:
+Ask user if they want to create Linear projects for tracking:
 
 ```
-Create Linear project and issue to track this alignment work?
+Create Linear projects for each SDK team to track this alignment work?
 
-Linear will help track:
-- Overall progress across SDKs
-- PR links as they're created
-- Implementation status
+Linear projects will help:
+- Each SDK team track their implementation work
+- Link projects to the SDK alignment initiative
+- Track PR links and progress per team
 
-Create Linear tracking? (y/n)
+Create Linear projects? (y/n)
 ```
 
 **If yes:**
-Invoke `sdk-linear-track` skill:
+Invoke `linear-initiative` skill with the feature name and selected SDK teams:
 
 ```
-Invoking sdk-linear-track...
+Invoking linear-initiative...
 
-Creating Linear tracking...
-✅ Project created: [SDK Alignment] Strict Trace Propagation
-✅ Issue created: GSD-1234
+Creating Linear projects for selected SDK teams...
+✅ Created project for sentry-python: Strict Trace Propagation [Python]
+✅ Created project for sentry-go: Strict Trace Propagation [Go]
+✅ Created project for sentry-java: Strict Trace Propagation [Java]
+✅ Created project for sentry-dotnet: Strict Trace Propagation [.NET]
+
+All projects linked to "SDK Projects to Align Across SDKs" initiative.
 ```
 
 **If no:**
@@ -223,19 +227,19 @@ Invoking sdk-feature-pr ruby...
 [3/3] .NET ✅ PR #6666 created
 ```
 
-### Step 7: Update Linear Issue
+### Step 7: Update Linear Projects
 
-If Linear tracking was created, update the issue with PR links:
+If Linear projects were created, update each project with its corresponding PR link:
 
 ```
-Updating Linear issue with PR links...
+Updating Linear projects with PR links...
 
-Invoking sdk-linear-track to update issue GSD-1234 with PR links...
-
-✅ Linear issue updated with 3 PR links
+✅ Updated sentry-python project with PR #9999
+✅ Updated sentry-go project with PR #8888
+✅ Updated sentry-dotnet project with PR #6666
 ```
 
-The sdk-linear-track skill will read PR links from `.sdk-align/prs.json` and add them to the Linear issue.
+For each SDK, add a comment or update the project description with the PR link using Linear MCP tools.
 
 ### Step 8: Final Summary
 
@@ -255,9 +259,9 @@ Status Check:
   🎯 4 SDKs selected for implementation
 
 Linear Tracking:
-  ✅ Project: [SDK Alignment] Strict Trace Propagation
-  ✅ Issue: GSD-1234
-  📊 https://linear.app/getsentry/issue/GSD-1234
+  ✅ Created 4 projects (one per SDK team)
+  ✅ All linked to "SDK Projects to Align Across SDKs" initiative
+  📊 Projects updated with PR links
 
 Implementations Generated:
   ✅ Ruby - Branch: feat/strict-trace-continuation
@@ -277,7 +281,7 @@ Manual Review Needed:
 Next Steps:
   1. Review PRs and address any feedback
   2. Fix Java test failure and create PR manually
-  3. Track progress in Linear: GSD-1234
+  3. Track progress in Linear projects for each SDK team
   4. Update develop docs if needed
 
 Context saved to .sdk-align/ directory.
@@ -448,5 +452,5 @@ User: /sdk-align-pipeline https://github.com/getsentry/sentry-docs/pull/11912
 - [SDK Feature Status Skill](../sdk-feature-status/SKILL.md)
 - [SDK Feature Generate Skill](../sdk-feature-generate/SKILL.md)
 - [SDK Feature PR Skill](../sdk-feature-pr/SKILL.md)
-- [SDK Linear Track Skill](../sdk-linear-track/SKILL.md)
+- [Linear Initiative Skill](../linear-initiative/SKILL.md)
 - [Sentry SDK Philosophy](https://develop.sentry.dev/sdk/philosophy/)
