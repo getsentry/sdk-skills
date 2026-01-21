@@ -2,7 +2,7 @@
 name: sdk-linear-track
 description: Create or update Linear project and issue for SDK feature alignment tracking. Links to "SDK Projects to Align Across SDKs" initiative, tracks implementation progress across SDKs, and updates with PR links. Requires Linear MCP server.
 model: sonnet
-allowed-tools: Read Write Bash AskUserQuestion
+allowed-tools: Read Write Bash AskUserQuestion TodoWrite
 compatibility: Requires Linear MCP server configured and authenticated.
 ---
 
@@ -276,6 +276,20 @@ Display to user:
 Show the Linear issue URL prominently.
 
 ## Guidelines
+
+### Progress Tracking
+
+**Use TodoWrite to track Linear tracking creation:**
+
+Create a todo list with the following steps:
+1. Gather required information
+2. Search for existing Linear issue
+3. Create Linear project (if creating new)
+4. Create Linear issue (if creating new)
+5. Update issue with PR links (if applicable)
+6. Update shared context
+
+Mark each step as in_progress when starting and completed when finished. This helps users understand the multi-step process of creating or updating Linear tracking.
 
 ### Linear Issue Best Practices
 

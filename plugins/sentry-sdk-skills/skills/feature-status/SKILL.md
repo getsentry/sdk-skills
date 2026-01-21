@@ -2,7 +2,7 @@
 name: sdk-feature-status
 description: Check SDK feature implementation status across all Sentry SDKs. Analyzes develop docs, finds reference implementations, and reports which SDKs have implemented, need updates, or are missing the feature. Creates shared context for other sdk-* skills.
 model: sonnet
-allowed-tools: Read Grep Glob Bash Write AskUserQuestion
+allowed-tools: Read Grep Glob Bash Write AskUserQuestion TodoWrite
 compatibility: Requires gh CLI (GitHub CLI) with authentication configured.
 ---
 
@@ -306,6 +306,19 @@ Display to user:
 5. Suggested next steps (e.g., "Run /sdk-feature-generate go to implement for Go SDK")
 
 ## Guidelines
+
+### Progress Tracking
+
+**Use TodoWrite to track the status check process:**
+
+Create a todo list with the following steps:
+1. Gather develop doc
+2. Find reference implementation
+3. Check all SDKs for implementation status
+4. Generate status report
+5. Write shared context files
+
+Mark each step as in_progress when starting and completed when finished. When checking SDKs, consider adding individual todos for each SDK or SDK group to track progress through the ~19 SDK repositories.
 
 ### Handling Edge Cases
 

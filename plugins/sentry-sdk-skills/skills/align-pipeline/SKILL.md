@@ -2,7 +2,7 @@
 name: sdk-align-pipeline
 description: Orchestrator skill that runs the complete SDK feature alignment workflow end-to-end. Checks status, creates Linear tracking, generates code for selected SDKs, and creates PRs. Coordinates sdk-feature-status, sdk-linear-track, sdk-feature-generate, and sdk-feature-pr skills.
 model: sonnet
-allowed-tools: Read Write Bash Skill AskUserQuestion
+allowed-tools: Read Write Bash Skill AskUserQuestion TodoWrite
 compatibility: Requires all sdk-* skills, gh CLI, Linear MCP, and SDK-specific tooling.
 ---
 
@@ -302,6 +302,20 @@ Context saved to .sdk-align/ directory.
 - If one SDK fails, continue with others
 - Collect all errors and show at end
 - Provide actionable next steps
+
+### Progress Tracking
+
+**Use TodoWrite throughout the workflow:**
+
+Create a todo list at the start with the main workflow steps:
+1. Run status check
+2. Confirm target SDKs
+3. Create Linear tracking (if requested)
+4. Generate implementations for each SDK
+5. Create PRs for each SDK
+6. Update Linear with PR links
+
+Mark each step as in_progress when starting and completed when finished. For SDK-specific tasks (generation, PRs), add individual todos for each SDK and track them separately.
 
 ### Workflow Flexibility
 

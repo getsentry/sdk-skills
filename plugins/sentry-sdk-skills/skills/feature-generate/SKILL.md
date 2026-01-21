@@ -2,7 +2,7 @@
 name: sdk-feature-generate
 description: Generate idiomatic implementation code for ONE Sentry SDK based on develop docs and reference implementation. Analyzes SDK patterns, follows conventions, generates tests, runs linting, and commits changes. Works standalone or with context from sdk-feature-status.
 model: sonnet
-allowed-tools: Read Grep Glob Bash Write Edit Task
+allowed-tools: Read Grep Glob Bash Write Edit Task TodoWrite
 compatibility: Requires gh CLI, git, and SDK-specific linting tools (black/ruff for Python, eslint for JS, etc.).
 ---
 
@@ -447,6 +447,23 @@ Next: Run /sdk-feature-pr python to create a pull request
 ```
 
 ## Guidelines
+
+### Progress Tracking
+
+**Use TodoWrite to track the implementation process:**
+
+Create a todo list with the following steps:
+1. Gather required information
+2. Fetch reference implementation
+3. Clone target SDK repository
+4. Analyze target SDK patterns
+5. Generate idiomatic implementation
+6. Run linting and tests
+7. Commit changes
+8. Push branch (if requested)
+9. Update implementations context
+
+Mark each step as in_progress when starting and completed when finished. This helps users track progress through the multi-step generation process.
 
 ### Code Generation Principles
 
