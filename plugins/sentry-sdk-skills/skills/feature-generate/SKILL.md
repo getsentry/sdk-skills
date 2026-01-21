@@ -2,8 +2,8 @@
 name: sdk-feature-generate
 description: Generate code for a Sentry SDK. Use when implementing a feature in python, javascript, go, ruby, java, or other SDKs. Keywords: implement, generate, code, SDK, feature.
 argument-hint: [sdk-name]
-allowed-tools: Read Grep Glob Bash Write Edit Task TodoWrite
-compatibility: Requires gh CLI, git, and SDK-specific linting tools.
+allowed-tools: Read Grep Glob Bash Write Edit Task TodoWrite Skill AskUserQuestion
+compatibility: Requires gh CLI, git, SDK-specific linting tools, and sentry-skills:commit.
 ---
 
 # SDK Feature Code Generator
@@ -49,7 +49,7 @@ This skill can:
 
 ## SDK to Repository Mapping
 
-See [../feature-status/references/sdk-mappings.md](../feature-status/references/sdk-mappings.md) for complete SDK to repository mapping (17 SDKs).
+See [../../references/sdk-mappings.md](../../references/sdk-mappings.md) for complete SDK to repository mapping (17 SDKs).
 
 ## Process
 
@@ -94,16 +94,29 @@ Analyze reference implementation:
 - **Configuration options** (new config fields, defaults)
 - **Documentation comments** (docstrings, JSDoc)
 
-### Step 3: Clone Target SDK Repository
+### Step 3: Locate or Clone Target SDK Repository
 
-```bash
-# Clone target SDK
-gh repo clone <TARGET_SDK_REPO> /tmp/<target-sdk-name> -- --depth 1
-cd /tmp/<target-sdk-name>
+**Ask user**: "Do you have a local checkout of {SDK}?"
 
-# Create feature branch
-git checkout -b <branch-name>
-```
+**If yes (local workflow):**
+- Ask for repository path (e.g., `~/code/sentry-python`)
+- Convert to absolute path using `realpath` or similar
+- Validate it's the correct repository using `git remote -v`
+- Check current branch with `git branch --show-current`
+- If not on main/master, warn: "Currently on {branch}. Should I create feature branch from here or switch to main first?"
+- If uncommitted changes exist, offer to stash them
+- Create feature branch: `git checkout -b <branch-name>`
+
+**If no (automated workflow):**
+- Clone to `/tmp/<target-sdk-name>` using `gh repo clone <TARGET_SDK_REPO> /tmp/<target-sdk-name> -- --depth 1`
+- **Warn user**: "Working in temporary directory. Changes will be pushed automatically to avoid loss."
+- Create feature branch: `git checkout -b <branch-name>`
+
+**Important**: Always store the absolute path in implementations.json for reliable navigation.
+
+**Branch naming:**
+- Suggest: `feat/<feature-slug>` (e.g., `feat/client-reports`)
+- User can override with custom name
 
 ### Step 4: Analyze Target SDK Patterns
 
@@ -115,202 +128,123 @@ Study the target SDK to understand conventions:
 
 ### Step 5: Generate Idiomatic Implementation
 
-Based on reference implementation + target SDK patterns, generate idiomatic code:
+Generate code adapting reference implementation to target SDK conventions:
 
-#### Core Implementation Files
+**Core implementation:**
+- Follow SDK naming patterns (snake_case vs camelCase, etc.)
+- Use SDK type system appropriately
+- Place files in conventional locations
+- Add documentation in SDK style
 
-Analyze the reference implementation and adapt it to the target SDK's conventions:
+**Configuration:**
+- Add options following SDK config patterns
+- Set appropriate defaults
 
-**Naming conventions:**
-- Study existing files in the target SDK (use Glob/Grep to find similar features)
-- Follow the SDK's naming patterns (e.g., snake_case for Python, camelCase for JavaScript)
-- Match function/class naming style from similar features
-
-**Type systems:**
-- Use the SDK's type annotation approach (type hints for Python, TypeScript types for JS, etc.)
-- Study existing code to understand how types are documented
-
-**File structure:**
-- Place files in locations consistent with similar features
-- Match the SDK's organization (e.g., feature modules, utilities, configuration)
-
-**Documentation:**
-- Add comments/docstrings matching the SDK's style
-- Study existing functions to see docstring format
-
-#### Configuration/Options
-
-Identify configuration options from the develop doc and reference implementation. Add them to the SDK's configuration system by:
-- Finding where options are defined (use Grep to search for "options", "config", etc.)
-- Adding new options following existing patterns
-- Setting appropriate defaults
-
-#### Tests
-
-Generate comprehensive tests that mirror the reference implementation's test coverage:
-- Identify the test framework used (pytest, jest, rspec, junit, etc.)
-- Match test file naming conventions (e.g., `test_*.py`, `*.test.ts`, `*_spec.rb`)
-- Follow assertion patterns used in existing tests
-- Cover the same scenarios as the reference implementation
-- Use SDK-specific test fixtures and helpers
+**Tests:**
+- Use SDK test framework
+- Match SDK test naming conventions
+- Mirror reference implementation coverage
+- Use SDK-specific fixtures/helpers
 
 ### Step 6: Run Linting and Tests
 
-Execute SDK-specific linting and testing based on the SDK's configuration:
-- Run formatters and linters found in config files
-- Run type checking if the SDK uses it
-- Run the test suite on new/modified tests
-- Fix any linting or test errors before proceeding
+Run formatters, linters, type checking (if used), and test suite.
 
-### Step 7: Commit Changes
+**If linting/tests fail**, ask: "What would you like to do?"
+- Try auto-fix
+- Continue anyway (note failures in context)
+- Let me fix manually
+- Skip this SDK
 
-Create a properly formatted commit:
+### Step 7: Review and Commit Changes
 
-```bash
-git add .
-git commit -m "$(cat <<'EOF'
-feat(<sdk>): Implement <feature-name>
+**Review (optional for local workflow):**
+Ask: "Code generated. What would you like to do?"
+- Show me the diff (concise: files, key changes, tests)
+- Continue to commit
+- Let me review manually
 
-Implements <feature-name> following the specification in develop docs.
+**Commit:**
+Stage changes: `git add .`
+Invoke: `Skill(sentry-skills:commit)` (handles Sentry conventional format)
 
-Key changes:
-- Add <key-change-1>
-- Implement <key-change-2>
-- Add tests for <test-scenarios>
+### Step 8: Push Branch
 
-Based on reference implementation: <reference-pr-url>
-Spec: <develop-doc-url>
+**If working in /tmp/ (automated workflow):**
+- **Always push** to avoid data loss: `git push -u origin <branch-name>`
+- Inform user: "Pushed to remote. Branch: {branch-name}"
 
-Co-Authored-By: Claude <noreply@anthropic.com>
-EOF
-)"
-```
+**If working in local checkout:**
+Use AskUserQuestion: "Push branch to remote?"
 
-**Commit message format:**
-- **Type**: `feat`, `fix`, `ref`, `test`, `docs`
-- **Scope**: SDK name or component
-- **Description**: Brief summary
-- **Body**: Key changes, links to develop doc and reference PR
-- **Co-author**: Claude attribution
+Options:
+1. "Yes, push now" - Run `git push -u origin <branch-name>`
+2. "No, I'll push later" - Note in implementations.json: `pushed: false`
 
-### Step 8: Push Branch (Optional)
-
-If user requested push:
-
-```bash
-git push -u origin <branch-name>
-```
-
-Otherwise, just commit locally.
+If not pushed, warn: "Remember to push before creating PR with /sdk-feature-pr"
 
 ### Step 9: Update Implementations Context
 
-Write implementation details to `.sdk-align/implementations.json` including: SDK name, feature, branch, commit SHA, files changed, pushed status, generation timestamp, and linting/test results.
+Write implementation details to `.sdk-align/implementations.json`:
 
-Update or create this file with the new implementation.
+```json
+{
+  "feature": "<feature-name>",
+  "implementations": [
+    {
+      "sdk": "<sdk-name>",
+      "branch": "<branch-name>",
+      "repo_path": "<local-path-or-/tmp/path>",
+      "commit_sha": "<sha>",
+      "files_changed": <count>,
+      "pushed": <true/false>,
+      "linting_passed": <true/false>,
+      "tests_passed": <true/false>,
+      "timestamp": "<iso-timestamp>"
+    }
+  ]
+}
+```
 
-### Step 10: Output Summary
+Update or create this file with the new implementation. If file exists, append to the `implementations` array.
 
-Display to user:
-- ✅ Implementation generated for `<sdk>`
-- Branch: `<branch-name>`
-- Files changed: `<count>` files
-- Commit: `<commit-sha>`
-- Linting: Passed ✓
-- Tests: Passed ✓ (X tests)
-- Pushed: Yes/No
-- Context saved to `.sdk-align/implementations.json`
+### Step 10: Create Pull Request (Optional)
 
-Suggest next step: Run `/sdk-feature-pr <sdk>` to create a pull request
+Use AskUserQuestion: "Create pull request now?"
+
+Options:
+1. "Yes, create PR" - Invoke sdk-feature-pr to create PR with tracked context
+2. "No, I'll create it later" - Skip, user can run /sdk-feature-pr later
+
+**If yes:**
+- Invoke `Skill(sdk-feature-pr, args: "<sdk-name>")`
+- sdk-feature-pr will read context, create PR, track results, and update Linear
+- Display PR URL in summary
+
+**If no:**
+- Inform user: "You can create a PR later by running `/sdk-feature-pr <sdk>`"
+- All context is saved and ready for deferred PR creation
+
+### Step 11: Output Summary
+
+```
+✅ <sdk> implementation complete
+Branch: <branch-name> | <commit-sha> | <count> files
+Linting: ✓ | Tests: ✓ (<X> tests) | Pushed: <yes/no>
+
+[If PR created:]
+PR: <url>
+
+[If deferred:]
+Next: /sdk-feature-pr <sdk>
+```
 
 ## Guidelines
 
-### Progress Tracking
-
-**Use TodoWrite to track the implementation process:**
-
-Create a todo list with the following steps:
-1. Gather required information
-2. Fetch reference implementation
-3. Clone target SDK repository
-4. Analyze target SDK patterns
-5. Generate idiomatic implementation
-6. Run linting and tests
-7. Commit changes
-8. Push branch (if requested)
-9. Update implementations context
-
-Mark each step as in_progress when starting and completed when finished. This helps users track progress through the multi-step generation process.
-
-### Code Generation Principles
-
-1. **Stay Idiomatic**
-   - Don't translate code literally
-   - Use language-specific idioms and patterns
-   - Follow SDK conventions for naming, structure, and style
-
-2. **Match Existing Patterns**
-   - Study similar features in target SDK
-   - Use same file structure and organization
-   - Follow existing test patterns
-
-3. **Respect Type Systems**
-   - Python: Use type hints/comments
-   - TypeScript: Use proper type annotations
-   - Go: Follow exported/unexported conventions
-   - Java/C#: Use strong typing throughout
-
-4. **Complete Implementation**
-   - Core functionality
-   - Configuration options
-   - Tests (unit + integration if applicable)
-   - Documentation comments
-   - Error handling
-
-5. **SDK Philosophy**
-   - Some SDKs are explicit (Python, Go)
-   - Some are "magical" (Ruby, PHP frameworks)
-   - Adapt implementation to SDK's design philosophy
-
-### Handling Edge Cases
-
-**Reference implementation not accessible:**
-- Use only develop doc to generate code
-- Ask user for implementation guidance
-- Generate scaffold with TODOs
-
-**Target SDK repo not accessible:**
-- Check `gh auth status`
-- Suggest `gh auth login`
-- Cannot proceed without access
-
-**Linting fails:**
-- Show linting errors to user
-- Attempt auto-fix (`--fix` flags)
-- If cannot fix automatically, ask user for guidance
-
-**Tests fail:**
-- Show test failures
-- Attempt to debug and fix
-- If cannot fix, create implementation with failing tests and note in output
-
-**Complex implementation:**
-- For very complex features, generate scaffold with detailed TODOs
-- Mark areas needing manual implementation
-- Provide implementation notes in commit message
-
-### Handling Edge Cases
-
-**Reference implementation not accessible:**
-- Use develop doc only to generate code
-- Ask user for clarification if needed
-
-**Linting/test failures:**
-- Attempt auto-fix using linting tool flags
-- If unable to fix, document failures and continue
-
-**Complex features:**
-- Consider using EnterPlanMode first to design approach
-- Generate scaffold with TODOs if implementation is unclear
+- Use TodoWrite to track the 10-step implementation process
+- Stay idiomatic - don't translate code literally, use language-specific patterns
+- Match existing patterns in target SDK (naming, structure, tests)
+- Respect type systems appropriate to each SDK
+- Complete implementation: core functionality, config, tests, docs, error handling
 
 

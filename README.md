@@ -39,7 +39,10 @@ Copy the `skills/` directory to your agent's skills location, or reference the S
 
 | Skill | Description |
 |-------|-------------|
-| `linear-initiative` | Creates Linear projects for SDK teams from an initiative. Use when rolling out features across multiple SDKs. |
+| `sdk-feature-status` | Check implementation status of a feature across all Sentry SDKs. Analyzes develop docs, finds reference implementations, and reports which SDKs have implemented, need updates, or are missing the feature. |
+| `sdk-feature-generate` | Generate idiomatic implementation code for one Sentry SDK. Works with local repos or /tmp/. Includes code review gates, error recovery, uses sentry-skills:commit, and optionally creates PR via sdk-feature-pr. |
+| `sdk-feature-pr` | Context adapter that creates PRs for SDK implementations. Reads alignment context, invokes sentry-skills:create-pr, tracks results, and updates Linear. Use for manual implementations, deferred PR creation, or retrying failures. |
+| `linear-initiative` | Creates Linear projects for SDK teams from an initiative. Use when rolling out features across multiple SDKs. Supports linking to existing initiatives. |
 
 
 ## Repository Structure

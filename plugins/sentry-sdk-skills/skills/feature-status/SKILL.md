@@ -32,7 +32,7 @@ Other `sdk-*` skills can read this context to work together seamlessly.
 
 ## SDK to Repository Mapping
 
-See [references/sdk-mappings.md](references/sdk-mappings.md) for complete SDK to repository mapping (17 SDKs total).
+See [references/sdk-mappings.md](../../references/sdk-mappings.md) for complete SDK to repository mapping (17 SDKs total).
 
 ## Process
 
@@ -78,40 +78,24 @@ Extract: SDK name, PR URL, merge date, key patterns
 
 ### Step 3: Check All SDKs
 
-For each SDK in the mapping, check implementation status using a **three-stage detection approach**:
+**Use TodoWrite to track progress:**
 
-#### Stage 1: Search for Develop Doc References
-
-```bash
-# Search PRs mentioning develop doc
-gh search prs --repo <SDK_REPO> --match body "<develop-doc-url>" --limit 5
-
-# Search commits mentioning develop doc
-gh search commits --repo <SDK_REPO> "<develop-doc-title>" --limit 5
+Create a todo list with each SDK to check:
+```
+1. Check JavaScript SDK (reference)
+2. Check Python SDK
+3. Check Ruby SDK
+...
+17. Check Unity SDK
 ```
 
-#### Stage 2: Search Git History
+Mark each as in_progress while checking, completed when done.
 
-```bash
-# Search for PRs with related titles
-gh search prs --repo <SDK_REPO> --match title "<feature-name>" --limit 5
-gh search prs --repo <SDK_REPO> --match title "<config-option>" --limit 5
+For each SDK in the mapping, check implementation status using three-stage detection:
 
-# Check PR states
-for each found PR:
-  gh pr view <PR_NUM> --repo <SDK_REPO> --json state,mergedAt,url
-```
-
-#### Stage 3: Search Code Patterns
-
-```bash
-# Search for configuration options from develop doc
-gh search code "<config-option-name>" --repo <SDK_REPO>
-
-# Search for class/function names from reference implementation
-gh search code "<class-name>" --repo <SDK_REPO>
-gh search code "<function-name>" --repo <SDK_REPO>
-```
+1. **Search for develop doc references** - PRs/commits mentioning develop doc URL or title
+2. **Search git history** - PRs with feature name or config options in title
+3. **Search code patterns** - Config options, class names, function names from reference
 
 #### Categorize Status
 
@@ -160,9 +144,50 @@ Display this table to the user.
 
 Create `.sdk-align/` directory and write context files:
 
-**`.sdk-align/context.json`** - Feature metadata including name, develop doc details, reference implementation, alignment scope, config options, and Linear issue.
+**`.sdk-align/context.json`**:
+```json
+{
+  "feature": "<feature-name>",
+  "develop_doc": {
+    "url": "<pr-or-commit-url>",
+    "type": "pr|commit|file"
+  },
+  "reference_implementation": {
+    "sdk": "<reference-sdk-name>",
+    "pr_url": "<pr-url>",
+    "pr_number": <number>
+  },
+  "alignment_scope": {
+    "domain": ["backend", "frontend", "mobile", "universal"],
+    "sdks": ["python", "go", ...]
+  },
+  "linear_issue": "<issue-id-or-url>",
+  "timestamp": "<iso-timestamp>"
+}
+```
 
-**`.sdk-align/status-report.json`** - Status for each SDK including implementation state, PR links, merge dates, and notes.
+**`.sdk-align/status-report.json`**:
+```json
+{
+  "feature": "<feature-name>",
+  "sdks": [
+    {
+      "name": "<sdk-name>",
+      "status": "implemented|needs_review|not_implemented|not_applicable",
+      "pr_url": "<url-if-found>",
+      "pr_number": <number-if-found>,
+      "merge_date": "<iso-date-if-merged>",
+      "notes": "<any-notes>"
+    }
+  ],
+  "summary": {
+    "implemented": <count>,
+    "needs_review": <count>,
+    "not_implemented": <count>,
+    "not_applicable": <count>
+  }
+}
+```
 
 Inform user that context has been saved for other `sdk-*` skills.
 
@@ -173,22 +198,28 @@ Display to user:
 2. Summary statistics
 3. List of SDKs needing implementation
 4. Location of saved context files
-5. Suggested next steps (e.g., "Run /sdk-feature-generate go to implement for Go SDK")
+
+**Suggested next steps:**
+- For single SDK: `/sdk-feature-generate {sdk-name}` (e.g., `/sdk-feature-generate python`)
+- For multiple SDKs: Run `/sdk-feature-generate` for each SDK sequentially
+- For Linear tracking: `/linear-initiative {feature-name}` (creates projects for SDK teams)
+
+Context saved to `.sdk-align/` - other skills will automatically use this.
 
 ## Guidelines
 
 ### Progress Tracking
 
-**Use TodoWrite to track the status check process:**
+**Use TodoWrite throughout:**
 
-Create a todo list with the following steps:
+Create main workflow todos:
 1. Gather develop doc
 2. Find reference implementation
-3. Check all SDKs for implementation status
+3. Check all SDKs for implementation status (see Step 3 for per-SDK tracking)
 4. Generate status report
 5. Write shared context files
 
-Mark each step as in_progress when starting and completed when finished. When checking SDKs, consider adding individual todos for each SDK or SDK group to track progress through the ~19 SDK repositories.
+In Step 3, create individual todos for each SDK to provide real-time progress as checking takes time.
 
 ### Handling Edge Cases
 
@@ -212,11 +243,4 @@ Mark each step as in_progress when starting and completed when finished. When ch
 **Conflicting implementations:**
 - Flag SDKs that have different implementations
 - Note in status report for manual review
-
-### Performance Optimization
-
-- Run SDK checks in parallel where possible (use background processes)
-- Cache GitHub API responses
-- Limit search results to recent PRs (last 2 years)
-- Skip code search for SDKs already found via PR/commit search
 
