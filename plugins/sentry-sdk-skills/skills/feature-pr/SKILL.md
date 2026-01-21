@@ -378,31 +378,3 @@ java        #7777        ✅ Open   https://github.com/.../7777
 ────────────────────────────────────────────────────────────
 ```
 
-## Example Workflow
-
-```
-User: /sdk-feature-pr python
-
-Skill:
-1. Reads context from .sdk-align/context.json
-2. Reads implementation from .sdk-align/implementations.json
-3. Finds branch: feat/strict-trace-continuation
-4. Verifies branch is pushed to remote
-5. Gets commit details
-6. Builds PR title: "feat(python): Implement strict trace continuation"
-7. Builds PR body with all links
-8. Invokes sentry-skills:create-pr
-9. PR created: https://github.com/getsentry/sentry-python/pull/9999
-10. Tracks PR in .sdk-align/prs.json
-11. Attempts to update Linear issue GSD-1234 with PR link
-
-User sees:
-  ✅ PR created for python
-  PR: https://github.com/getsentry/sentry-python/pull/9999
-  Branch: feat/strict-trace-continuation
-  Linked to develop doc: ✓
-  Linked to reference PR: ✓
-  Linked to Linear issue: ✓
-
-  View PR: https://github.com/getsentry/sentry-python/pull/9999
-```
