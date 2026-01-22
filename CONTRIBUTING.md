@@ -12,7 +12,8 @@ Thank you for your interest in contributing to Sentry SDK Skills! This guide wil
 
 2. Install the plugin locally:
    ```bash
-   claude plugin marketplace add .
+   # Note: ./ (not .) - the slash indicates a local path vs remote marketplace name (owner/repo)
+   claude plugin marketplace add ./
    claude plugin install sentry-sdk-skills
    ```
 
