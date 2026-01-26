@@ -9,9 +9,11 @@ Agent skills for managing feature development across Sentry SDKs, following the 
 ```bash
 # Clone the repository
 git clone git@github.com:getsentry/sdk-skills.git
+cd sdk-skills
 
 # Install the marketplace from the local clone
-claude plugin marketplace add ~/sentry-sdk-skills
+# Note: ./ (not .) - the slash indicates a local path vs remote marketplace name (owner/repo)
+claude plugin marketplace add ./
 
 # Install the plugin directly
 claude plugin install sentry-sdk-skills
