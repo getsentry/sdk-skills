@@ -2,132 +2,168 @@
 
 Agent skills for managing feature development across Sentry SDKs, following the [Agent Skills](https://agentskills.io) open format.
 
+## What This Does
+
+Automates checking implementation status across all 17 Sentry SDKs, then helps you implement features efficiently using Claude Code's natural workflows.
+
 ## Installation
 
-### Claude Code (from local clone)
+### Claude Code
 
 ```bash
-# Clone the repository
 git clone git@github.com:getsentry/sdk-skills.git
-
-# Install the marketplace from the local clone
-claude plugin marketplace add ~/sentry-sdk-skills
-
-# Install the plugin directly
-claude plugin install sentry-sdk-skills
+claude plugin install ~/sdk-skills
 ```
 
-After installation, restart Claude Code. The skills will be automatically invoked when relevant to your task.
+Restart Claude Code after installation.
 
 ### Updating
 
 ```bash
-# Update the marketplace index
-claude plugin marketplace update
-
-# Update the plugin
 claude plugin update sentry-sdk-skills
 ```
 
-Or use `/plugin` to open the interactive plugin manager.
+Or use `/plugin` for the interactive plugin manager.
 
-### Other Agents
+## Skills
 
-Copy the `skills/` directory to your agent's skills location, or reference the SKILL.md files directly according to your agent's documentation.
+| Skill | Purpose |
+|-------|---------|
+| `sdk-feature-status` | Check which of the 17 SDKs have implemented a feature. Searches GitHub across all repos, analyzes PRs/commits/code, creates status report. |
+| `linear-initiative` | Create Linear projects for SDK teams to track feature rollout. |
 
-## Available Skills
+## Quick Start
 
-| Skill | Description |
-|-------|-------------|
-| `sdk-feature-status` | Check implementation status of a feature across all Sentry SDKs. Analyzes develop docs, finds reference implementations, and reports which SDKs have implemented, need updates, or are missing the feature. |
-| `sdk-feature-generate` | Generate idiomatic implementation code for one Sentry SDK. Works with local repos or /tmp/. Includes code review gates, error recovery, uses sentry-skills:commit, and optionally creates PR via sdk-feature-pr. |
-| `sdk-feature-pr` | Context adapter that creates PRs for SDK implementations. Reads alignment context, invokes sentry-skills:create-pr, tracks results, and updates Linear. Use for manual implementations, deferred PR creation, or retrying failures. |
-| `linear-initiative` | Creates Linear projects for SDK teams from an initiative. Use when rolling out features across multiple SDKs. Supports linking to existing initiatives. |
+### 1. Check Status
 
+```bash
+/sdk-feature-status https://github.com/getsentry/sentry-docs/pull/12345
+```
+
+Creates:
+- `.sdk-align/status-report.json` - Which SDKs have/need the feature
+- `.sdk-align/context.json` - Feature details and reference implementation
+
+### 2. Implement Features
+
+**Simple feature:**
+```bash
+cd ~/code/sentry-python
+"Implement client reports from .sdk-align/context.json based on the JS reference"
+/commit
+/create-pr
+```
+
+**Complex feature:**
+```bash
+cd ~/code/sentry-go
+/plan
+"Implement client reports from .sdk-align/context.json - design the approach first"
+# Review plan, then implement
+```
+
+**Batch implementation:**
+```bash
+"Look at .sdk-align/status-report.json and implement for SDKs that need it"
+```
+
+**📖 See [HOW-TO.md](./HOW-TO.md) for complete step-by-step guide**
+
+## How It Works
+
+1. **status skill** automates the tedious work (checking 17 repos, analyzing PRs, aggregating results)
+2. **context files** store feature details you can reference in prompts
+3. **Claude Code** + **plan mode** do the implementation work naturally
+4. **sentry-skills** handles commit formatting and PR creation
+
+This gives you automation where it matters (status checking) while keeping implementation flexible.
+
+## Key Concepts
+
+### Context Files
+
+Reference in your prompts:
+```bash
+"Read .sdk-align/context.json and implement in Ruby"
+"Which SDKs in .sdk-align/status-report.json need this?"
+```
+
+### Plan Mode
+
+Use `/plan` for complex features:
+```bash
+/plan
+"Implement client reports - design the approach first"
+```
+
+Plan mode:
+- Explores the codebase
+- Studies existing patterns
+- Designs implementation strategy
+- Gets your approval before coding
+
+### Iterative Workflow
+
+Start with 1-2 SDKs to validate your approach:
+```bash
+/sdk-feature-status <url>  # Get the landscape
+# Implement in Python (reference)
+# Implement in Go (test another language)
+# Expand to remaining SDKs
+```
+
+## Dependencies
+
+Integrates with [sentry-skills](https://github.com/getsentry/skills) plugin:
+- `/commit` - Formats commits following Sentry conventions
+- `/create-pr` - Creates PRs with proper Sentry formatting
+
+Install sentry-skills alongside this plugin.
 
 ## Repository Structure
 
 ```
 sdk-skills/
-├── .claude-plugin/
-│   └── marketplace.json      # Marketplace manifest
-├── plugins/
-│   └── sentry-sdk-skills/
-│       ├── .claude-plugin/
-│       │   └── plugin.json   # Plugin manifest
-│       └── skills/
-├── AGENTS.md                 # Agent-facing documentation
-├── CLAUDE.md                 # Symlink to AGENTS.md
-└── README.md                 # This file
+├── plugins/sentry-sdk-skills/
+│   ├── .claude-plugin/plugin.json
+│   ├── skills/
+│   │   ├── feature-status/      # Status checker
+│   │   └── linear-initiative/   # Linear integration
+│   └── references/
+│       └── sdk-mappings.md      # SDK to repo mapping
+├── HOW-TO.md                    # Step-by-step guide
+└── README.md                    # This file
 ```
 
-## Creating New Skills
+## Why This Approach?
 
-Skills follow the [Agent Skills specification](https://agentskills.io/specification). Each skill requires a `SKILL.md` file with YAML frontmatter.
+**What we automated:**
+- Checking 17 SDK repositories (would take 30+ minutes manually)
+- GitHub API searches for PRs, commits, code patterns
+- Aggregating results into actionable report
 
-### Skill Template
+**What we didn't automate:**
+- Code generation (Claude Code + prompts work better)
+- PR creation (delegated to sentry-skills:create-pr)
+- Repository management (use git normally)
 
-Create a new directory under `plugins/sentry-sdk-skills/skills/`:
+Result: Automation where it provides real value, flexibility everywhere else.
 
-```
-plugins/sentry-sdk-skills/skills/my-skill/
-└── SKILL.md
-```
+## Documentation
 
-**SKILL.md format:**
-
-```yaml
----
-name: my-skill
-description: A clear description of what this skill does and when to use it. Include keywords that help agents identify when this skill is relevant.
----
-
-# My Skill Name
-
-## Instructions
-
-Step-by-step guidance for the agent.
-
-## Examples
-
-Concrete examples showing expected input/output.
-
-## Guidelines
-
-- Specific rules to follow
-- Edge cases to handle
-```
-
-### Naming Conventions
-
-- **name**: 1-64 characters, lowercase alphanumeric with hyphens only
-- **description**: Up to 1024 characters, include trigger keywords
-- Keep SKILL.md under 500 lines; split longer content into reference files
-
-### Optional Fields
-
-| Field | Description |
-|-------|-------------|
-| `license` | License name or path to license file |
-| `compatibility` | Environment requirements (max 500 chars) |
-| `model` | Override model for this skill (e.g., `sonnet`, `opus`, `haiku`) |
-| `allowed-tools` | Space-delimited list of tools the skill can use |
-| `metadata` | Arbitrary key-value pairs for additional properties |
-
-```yaml
----
-name: my-skill
-description: What this skill does
-license: Apache-2.0
-model: sonnet
-allowed-tools: Read Grep Glob
----
-```
+**[HOW-TO.md](./HOW-TO.md)** - Complete step-by-step guide:
+- Check status across all SDKs
+- Use context files in prompts
+- Implement with plan mode
+- Commit and create PRs
+- Troubleshooting and best practices
+- Full example session
 
 ## References
 
 - [Agent Skills Specification](https://agentskills.io/specification)
 - [Sentry Engineering Practices](https://develop.sentry.dev/engineering-practices/)
+- [Claude Code Documentation](https://docs.anthropic.com/en/docs/claude-code)
 
 ## License
 

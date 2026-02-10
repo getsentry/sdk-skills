@@ -1,8 +1,7 @@
 ---
 name: sdk-feature-status
 description: Check which Sentry SDKs have a feature and which need it. Use when auditing SDK status, checking implementation progress, or starting SDK alignment. Keywords: check status, which SDKs, SDK alignment, feature status.
-argument-hint: [develop-doc-url]
-allowed-tools: Read Grep Glob Bash Write AskUserQuestion TodoWrite
+allowed-tools: Read Grep Glob Bash Write AskUserQuestion TaskCreate TaskUpdate TaskList
 compatibility: Requires gh CLI with authentication.
 ---
 
@@ -18,9 +17,9 @@ Use this skill when:
 - You need to find the reference implementation for a feature
 - You want to create shared context for other `sdk-*` skills
 
-## Shared Context System
+## Output Files
 
-This skill creates/updates `.sdk-align/` directory with shared context:
+This skill creates `.sdk-align/` directory with:
 
 ```
 .sdk-align/
@@ -28,7 +27,7 @@ This skill creates/updates `.sdk-align/` directory with shared context:
 └── status-report.json    # Implementation status per SDK
 ```
 
-Other `sdk-*` skills can read this context to work together seamlessly.
+You can reference these files in your prompts to Claude when implementing features.
 
 ## SDK to Repository Mapping
 
@@ -78,18 +77,9 @@ Extract: SDK name, PR URL, merge date, key patterns
 
 ### Step 3: Check All SDKs
 
-**Use TodoWrite to track progress:**
+**Use TaskCreate to track progress:**
 
-Create a todo list with each SDK to check:
-```
-1. Check JavaScript SDK (reference)
-2. Check Python SDK
-3. Check Ruby SDK
-...
-17. Check Unity SDK
-```
-
-Mark each as in_progress while checking, completed when done.
+Create a task for each SDK to check. Mark each as `in_progress` while checking, `completed` when done.
 
 For each SDK in the mapping, check implementation status using three-stage detection:
 
@@ -201,32 +191,29 @@ Inform user that context has been saved for other `sdk-*` skills.
 ## Output
 
 Display to user:
-1. Formatted status table
+1. Formatted status table with implementation status per SDK
 2. Summary statistics
-3. List of SDKs needing implementation
-4. Location of saved context files
+3. Location of saved context files
 
-**Suggested next steps:**
-- For single SDK: `/sdk-feature-generate {sdk-name}` (e.g., `/sdk-feature-generate python`)
-- For multiple SDKs: Run `/sdk-feature-generate` for each SDK sequentially
-- For Linear tracking: `/linear-initiative {feature-name}` (creates projects for SDK teams)
+**Next steps guidance:**
 
-Context saved to `.sdk-align/` - other skills will automatically use this.
+```
+Context saved to .sdk-align/
+
+To implement:
+  "Implement this feature in Go from .sdk-align/context.json"
+
+For complex features, use plan mode first:
+  /plan then describe the implementation task
+
+Tip: Start with 1-2 SDKs to validate approach before expanding.
+```
 
 ## Guidelines
 
 ### Progress Tracking
 
-**Use TodoWrite throughout:**
-
-Create main workflow todos:
-1. Gather develop doc
-2. Find reference implementation
-3. Check all SDKs for implementation status (see Step 3 for per-SDK tracking)
-4. Generate status report
-5. Write shared context files
-
-In Step 3, create individual todos for each SDK to provide real-time progress as checking takes time.
+Use TaskCreate to track main workflow steps and individual SDK checks. This provides real-time progress visibility as checking takes time.
 
 ### Handling Edge Cases
 
