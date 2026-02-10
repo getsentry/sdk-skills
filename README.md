@@ -12,7 +12,15 @@ Automates checking implementation status across all 17 Sentry SDKs, then helps y
 
 ```bash
 git clone git@github.com:getsentry/sdk-skills.git
-claude plugin install ~/sdk-skills
+
+cd sdk-skills
+
+# Install the marketplace from the local clone
+# Note: ./ (not .) - the slash indicates a local path vs remote marketplace name (owner/repo)
+claude plugin marketplace add ./
+
+# Install the plugin directly
+claude plugin install sentry-sdk-skills
 ```
 
 Restart Claude Code after installation.
