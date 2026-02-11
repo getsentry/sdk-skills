@@ -48,7 +48,7 @@ Check which of the 17 Sentry SDKs have implemented a feature.
 |-----|------------|------|-------------|-------|
 | `javascript` | `getsentry/sentry-javascript` | Frontend | - | Browser + Node.js environments |
 | `python` | `getsentry/sentry-python` | Backend | - | Full feature support |
-| `java` | `getsentry/sentry-java` | Backend | `path:sentry/` | Shares repo with Android |
+| `java` | `getsentry/sentry-java` | Backend | `path:sentry/ -path:sentry-android/` | Shares repo with Android |
 | `ruby` | `getsentry/sentry-ruby` | Backend | - | Full feature support |
 | `php` | `getsentry/sentry-php` | Backend | - | Full feature support |
 | `go` | `getsentry/sentry-go` | Backend | - | Full feature support |
@@ -279,7 +279,7 @@ gh search code "config_option" --repo {repo} --json path,repository
 
 # Code search with path filter (CRITICAL for shared repos)
 gh search code "ClientReport path:sentry-android/" --repo getsentry/sentry-java --json path,repository
-gh search code "ClientReport path:sentry/" --repo getsentry/sentry-java --json path,repository
+gh search code "ClientReport path:sentry/ -path:sentry-android/" --repo getsentry/sentry-java --json path,repository
 
 # Issue search
 gh search issues "feature name" --repo {repo} --json number,title,state,url

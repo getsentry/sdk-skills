@@ -40,13 +40,14 @@ gh search prs --repo {repo} "{keywords}" --state all --limit 10 --json number,ti
 # Android in getsentry/sentry-java
 gh search code --repo getsentry/sentry-java "ClientReport path:sentry-android/" --json path,repository
 
-# Java in getsentry/sentry-java
-gh search code --repo getsentry/sentry-java "ClientReport path:sentry/" --json path,repository
+# Java in getsentry/sentry-java (with negative filter to exclude Android)
+gh search code --repo getsentry/sentry-java "ClientReport path:sentry/ -path:sentry-android/" --json path,repository
 ```
 
 **IMPORTANT**: When path_filter is provided, ONLY count code matches within that path.
 - For android (`path:sentry-android/`): ONLY files in `sentry-android/` directory
-- For java (`path:sentry/`): ONLY files in `sentry/` directory (NOT `sentry-android/`)
+- For java (`path:sentry/ -path:sentry-android/`): ONLY files in `sentry/` directory, explicitly excluding `sentry-android/`
+- The negative filter `-path:sentry-android/` is CRITICAL to prevent false positives from substring matching
 
 ### 3. Issue Search
 
@@ -91,3 +92,8 @@ Return exactly this JSON structure:
 - Without path filters, searches return identical results for both SDKs
 - Code in `sentry-android/` does NOT mean Java SDK has the feature
 - Code in `sentry/` does NOT mean Android SDK has the feature
+
+**Substring matching protection:**
+- GitHub's `path:` qualifier may perform substring matching
+- Use negative filters to prevent false matches: `-path:sentry-android/`
+- Example: `path:sentry/ -path:sentry-android/` ensures Java-only results
