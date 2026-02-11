@@ -8,6 +8,23 @@ allowed-tools: Bash Task
 
 Check which of the 17 Sentry SDKs have implemented a feature.
 
+## Quick Reference
+
+| Input | Action |
+|-------|--------|
+| Develop doc URL | Extract feature, find reference PR, check all SDKs |
+| Feature question | Extract keywords, search for reference implementation, check all SDKs |
+| SDK-specific question | Check single SDK only |
+
+| Output | Location |
+|--------|----------|
+| Formatted report | Displayed inline |
+| Machine-readable JSON | `.sdk-align/feature-status.json` (optional) |
+
+**Coverage:** 17 SDKs (JavaScript, Python, Java, Android, Ruby, PHP, Go, .NET, Rust, Elixir, Cocoa, React Native, Flutter, Kotlin, Unity, Unreal, Native)
+**Duration:** 2-5 minutes
+**Requires:** GitHub CLI (`gh`) with authentication
+
 ## Usage
 
 **Input:** Develop doc URL or free-form question
