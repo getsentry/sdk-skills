@@ -61,20 +61,20 @@ Search for BOTH code patterns AND config options. Config options are often the m
 **Examples for shared repo:**
 ```bash
 # Android in getsentry/sentry-java - code pattern
-gh search code --repo getsentry/sentry-java "ClientReport path:sentry-android/" --json path,repository
+gh search code --repo getsentry/sentry-java "ClientReport path:sentry-android-core" --json path,repository
 
 # Android - config option
-gh search code --repo getsentry/sentry-java "sendClientReports path:sentry-android/" --json path,repository
+gh search code --repo getsentry/sentry-java "sendClientReports path:sentry-android-core" --json path,repository
 
 # Java in getsentry/sentry-java (with negative filter to exclude Android)
-gh search code --repo getsentry/sentry-java "ClientReport path:sentry/ -path:sentry-android/" --json path,repository
-gh search code --repo getsentry/sentry-java "send_client_reports path:sentry/ -path:sentry-android/" --json path,repository
+gh search code --repo getsentry/sentry-java "ClientReport path:sentry/ -path:sentry-android" --json path,repository
+gh search code --repo getsentry/sentry-java "send_client_reports path:sentry/ -path:sentry-android" --json path,repository
 ```
 
 **IMPORTANT**: When path_filter is provided, ONLY count code matches within that path.
-- For android (`path:sentry-android/`): ONLY files in `sentry-android/` directory
-- For java (`path:sentry/ -path:sentry-android/`): ONLY files in `sentry/` directory, explicitly excluding `sentry-android/`
-- The negative filter `-path:sentry-android/` is CRITICAL to prevent false positives from substring matching
+- For android (`path:sentry-android-core`): ONLY files in `sentry-android-core/` directory (main Android SDK module)
+- For java (`path:sentry/ -path:sentry-android`): ONLY files in `sentry/` directory, excluding ALL `sentry-android*` directories
+- The negative filter `-path:sentry-android` (without trailing slash) is CRITICAL - it excludes all Android directories (sentry-android-core, sentry-android-ndk, etc.) as a prefix match
 
 **Result aggregation:**
 - Track whether code patterns were found: `has_code_pattern = true/false`
@@ -176,10 +176,17 @@ Apply in this order:
 - Always use path filters when provided
 - Android and Java share `getsentry/sentry-java` but have separate codebases
 - Without path filters, searches return identical results for both SDKs
-- Code in `sentry-android/` does NOT mean Java SDK has the feature
+- Code in `sentry-android-core/` does NOT mean Java SDK has the feature
 - Code in `sentry/` does NOT mean Android SDK has the feature
 
-**Substring matching protection:**
-- GitHub's `path:` qualifier may perform substring matching
-- Use negative filters to prevent false matches: `-path:sentry-android/`
-- Example: `path:sentry/ -path:sentry-android/` ensures Java-only results
+**Android SDK path structure:**
+- Main Android code is in `sentry-android-core/` (NOT `sentry-android/`)
+- Additional modules: `sentry-android-ndk/`, `sentry-android-replay/`, etc.
+- The `sentry-android/` directory itself contains no SDK code (just build config)
+- Use `path:sentry-android-core` for Android searches
+
+**Prefix matching for exclusion:**
+- GitHub's negative path filter uses prefix matching
+- `-path:sentry-android` (no trailing slash) excludes ALL directories starting with `sentry-android`
+- This excludes: `sentry-android/`, `sentry-android-core/`, `sentry-android-ndk/`, etc.
+- Example: `path:sentry/ -path:sentry-android` ensures Java-only results (excludes all Android)

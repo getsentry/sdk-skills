@@ -63,7 +63,7 @@ All SDKs in this table will be checked:
 | `javascript` | `getsentry/sentry-javascript` | Frontend | - | Browser + Node.js environments |
 | `electron` | `getsentry/sentry-electron` | Desktop | - | Desktop applications |
 | `python` | `getsentry/sentry-python` | Backend | - | Full feature support |
-| `java` | `getsentry/sentry-java` | Backend | `path:sentry/ -path:sentry-android/` | Shares repo with Android |
+| `java` | `getsentry/sentry-java` | Backend | `path:sentry/ -path:sentry-android` | Shares repo with Android |
 | `ruby` | `getsentry/sentry-ruby` | Backend | - | Full feature support |
 | `php` | `getsentry/sentry-php` | Backend | - | Full feature support |
 | `go` | `getsentry/sentry-go` | Backend | - | Full feature support |
@@ -73,7 +73,7 @@ All SDKs in this table will be checked:
 | `laravel` | `getsentry/sentry-laravel` | Framework | - | PHP framework integration |
 | `symfony` | `getsentry/sentry-symfony` | Framework | - | PHP framework integration |
 | `cocoa` | `getsentry/sentry-cocoa` | Mobile | - | iOS/macOS, profiling supported |
-| `android` | `getsentry/sentry-java` | Mobile | `path:sentry-android/` | Shares repo with Java, profiling supported |
+| `android` | `getsentry/sentry-java` | Mobile | `path:sentry-android-core` | Shares repo with Java, profiling supported |
 | `react-native` | `getsentry/sentry-react-native` | Mobile | - | Wraps JavaScript + native SDKs |
 | `flutter` | `getsentry/sentry-dart` | Mobile | - | Cross-platform mobile |
 | `kotlin` | `getsentry/sentry-kotlin-multiplatform` | Mobile | - | Multiplatform support |
@@ -343,8 +343,8 @@ gh search code "class ClassName" --repo {repo} --json path,repository
 gh search code "config_option" --repo {repo} --json path,repository
 
 # Code search with path filter (CRITICAL for shared repos)
-gh search code "ClientReport path:sentry-android/" --repo getsentry/sentry-java --json path,repository
-gh search code "ClientReport path:sentry/ -path:sentry-android/" --repo getsentry/sentry-java --json path,repository
+gh search code "ClientReport path:sentry-android-core" --repo getsentry/sentry-java --json path,repository
+gh search code "ClientReport path:sentry/ -path:sentry-android" --repo getsentry/sentry-java --json path,repository
 
 # Issue search
 gh search issues "feature name" --repo {repo} --json number,title,state,url
