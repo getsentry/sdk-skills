@@ -140,10 +140,6 @@ Filter results:
 2. Select first result (latest merged PR)
    - Rationale: Later PRs have refined naming, better documentation, lessons learned
 
-**Validation in Step 2.2:**
-- After fetching PR, check if `body` field is non-empty
-- If empty/null, skip pattern extraction and proceed to Step 3 with keywords only
-
 If no PRs found at all, skip to Step 3 using only the keywords from Step 1.
 
 #### 2.2 Fetch PR Details
@@ -291,9 +287,10 @@ Each result line follows this format (use GitHub-flavored markdown):
 - All markdown must render correctly on GitHub
 
 **Confidence levels** (for "implemented" only):
-- `[HIGH]`: PR + code + config
-- `[MED]`: PR + code OR code only
-- `[LOW]`: PR only or weak signal
+Display the agent's confidence value in uppercase with abbreviation for "medium":
+- `"high"` → `[HIGH]`: PR + code + config
+- `"medium"` → `[MED]`: PR + code OR code only
+- `"low"` → `[LOW]`: PR only or weak signal
 
 Optionally show progress counter: `[3/23]`, `[4/23]`. Between batches, display: "Checking next batch..."
 
