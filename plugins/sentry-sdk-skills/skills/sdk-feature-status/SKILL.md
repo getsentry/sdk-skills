@@ -244,7 +244,7 @@ Stream results immediately as subagents return (don't wait for batch completion)
 ```
 ✅ python  #1234  2024-01-15  [HIGH]  getsentry/sentry-python
 ✅ java    #5678  2024-02-01  [MED]   getsentry/sentry-java
-⚠️  android  #9012  (open)  getsentry/sentry-java
+🔄 android  #9012  (open)  getsentry/sentry-java
 ❌ flutter  getsentry/sentry-dart
 🚫 native  getsentry/sentry-native  (reason)
 ⚠️  rust  getsentry/sentry-rust  (error message)
@@ -265,7 +265,7 @@ Summary
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 12 implemented ✅
-2 in review ⚠️
+2 in review 🔄
 7 need implementation ❌
 1 not applicable 🚫
 1 error ⚠️
@@ -342,7 +342,7 @@ gh search issues "feature name" --repo {repo} --json number,title,state,url
 
 ## Guidelines
 
-**Status determination:** ✅ Implemented (PR + code in correct path, confidence: HIGH/MED/LOW) | ⚠️ Needs review (open PR or unclear) | ❌ Not implemented (no evidence) | 🚫 Not applicable (impossible for SDK type) | ⚠️ Error (command failed)
+**Status determination:** ✅ Implemented (PR + code in correct path, confidence: HIGH/MED/LOW) | 🔄 Needs review (open PR or unclear) | ❌ Not implemented (no evidence) | 🚫 Not applicable (impossible for SDK type) | ⚠️ Error (command failed)
 
 **Confidence:** HIGH (PR + code + config) | MED (PR + code OR code only) | LOW (PR only or weak signal)
 

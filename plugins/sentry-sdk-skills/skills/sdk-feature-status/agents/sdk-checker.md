@@ -113,7 +113,7 @@ Return exactly this JSON structure:
 
 - ✅ **implemented**: Merged PR + code evidence found IN THE CORRECT PATH
   - Set confidence based on evidence strength (see Output section)
-- ⚠️ **needs_review**: Open PR or unclear implementation (confidence = null)
+- 🔄 **needs_review**: Open PR or unclear implementation (confidence = null)
 - ❌ **not_implemented**: No evidence found IN THE CORRECT PATH (confidence = null)
 - 🚫 **not_applicable**: Feature doesn't apply to this SDK type (confidence = null)
 - ⚠️ **error**: gh command failed (confidence = null, include error message)
