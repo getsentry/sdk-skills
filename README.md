@@ -42,6 +42,7 @@ Copy the `skills/` directory to your agent's skills location, or reference the S
 | Skill | Description |
 |-------|-------------|
 | `linear-initiative` | Creates Linear projects for SDK teams from an initiative. Use when rolling out features across multiple SDKs. |
+| `sdk-feature-status` | Check feature implementation status across all 17 Sentry SDKs. Use for SDK parity checks, feature rollout status, and cross-SDK coverage audits. |
 
 
 ## Repository Structure
