@@ -111,12 +111,30 @@ Return exactly this JSON structure:
 
 ## Status Determination
 
-- ✅ **implemented**: Merged PR + code evidence found IN THE CORRECT PATH
-  - Set confidence based on evidence strength (see Output section)
-- 🔄 **needs_review**: Open PR or unclear implementation (confidence = null)
-- ❌ **not_implemented**: No evidence found IN THE CORRECT PATH (confidence = null)
-- 🚫 **not_applicable**: Feature doesn't apply to this SDK type (confidence = null)
-- ⚠️ **error**: gh command failed (confidence = null, include error message)
+Apply in this order:
+
+1. **⚠️ error**: If ANY gh command failed (rate limit, auth issue, network error)
+   - confidence = null, include error message in notes
+
+2. **🔄 needs_review**: If open PR found (state != "MERGED")
+   - confidence = null
+
+3. **✅ implemented**: If ANY evidence found IN THE CORRECT PATH:
+   - Merged PR (state = "MERGED"), OR
+   - Code pattern matches, OR
+   - Config option matches
+   - Set confidence based on evidence strength (see Output section)
+   - When only weak evidence exists, prefer "implemented" with low confidence over "not_implemented"
+
+4. **🚫 not_applicable**: If feature doesn't apply to this SDK type
+   - Examples: backend-only feature on mobile SDK, server-side feature on client SDK
+   - confidence = null
+   - Only use when certain the feature is impossible for this SDK type
+
+5. **❌ not_implemented**: If no evidence found IN THE CORRECT PATH
+   - No PRs (open or merged), no code patterns, no config options
+   - confidence = null
+   - Default when searches return empty results
 
 ## Path Filtering Rules
 

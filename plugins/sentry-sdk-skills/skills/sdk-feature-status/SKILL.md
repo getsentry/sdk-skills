@@ -342,7 +342,7 @@ gh search issues "feature name" --repo {repo} --json number,title,state,url
 
 ## Guidelines
 
-**Status determination:** ✅ Implemented (PR + code in correct path, confidence: HIGH/MED/LOW) | 🔄 Needs review (open PR or unclear) | ❌ Not implemented (no evidence) | 🚫 Not applicable (impossible for SDK type) | ⚠️ Error (command failed)
+**Status determination:** ✅ Implemented (evidence found: merged PR OR code OR config, confidence: HIGH/MED/LOW) | 🔄 Needs review (open PR or unclear) | ❌ Not implemented (no evidence) | 🚫 Not applicable (impossible for SDK type) | ⚠️ Error (command failed)
 
 **Confidence:** HIGH (PR + code + config) | MED (PR + code OR code only) | LOW (PR only or weak signal)
 
