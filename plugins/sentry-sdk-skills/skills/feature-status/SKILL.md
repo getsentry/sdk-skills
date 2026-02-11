@@ -25,6 +25,12 @@ Check which of the 17 Sentry SDKs have implemented a feature.
 **Duration:** 2-5 minutes
 **Requires:** GitHub CLI (`gh`) with authentication
 
+## ⚠️ Critical Requirements
+
+- **Authentication required**: Run `gh auth status` before using. Unauthenticated requests are limited to 60/hour (vs 5,000/hour authenticated).
+- **Rate limiting**: If you hit rate limits, the skill will return partial results. Wait 60 minutes or check `gh auth status`.
+- **Network access**: Requires internet access to GitHub API.
+
 ## Usage
 
 **Input:** Develop doc URL or free-form question
