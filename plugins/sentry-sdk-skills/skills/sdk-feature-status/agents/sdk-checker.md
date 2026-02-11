@@ -124,7 +124,7 @@ Return exactly this JSON structure:
 **Field requirements:**
 - `pr_url`: MUST be the full GitHub URL when PR found (use `url` field from `gh search prs` output)
 - `pr_number`: Extract from PR URL or use `number` field from search results
-- `merged_date`: Use `closedAt` field from search results, format as YYYY-MM-DD
+- `merged_date`: Use `closedAt` field from merged PR search results (for merged PRs, `closedAt` is the merge date), format as YYYY-MM-DD. Since `mergedAt` is not available in `gh search prs` output, `closedAt` is the correct field to use.
 - `notes`: Keep concise, use for reasons (not_applicable) or context (implemented with path filter)
 
 **Confidence field** (only for status = "implemented"):
@@ -170,34 +170,38 @@ Apply in this order:
 
 ### Example Decision Flows
 
-**Scenario A: MERGED PR + code found**
-- Merged PR (from `is:merged` search) + code patterns found
+**Scenario A: MERGED PR + code + config found**
+- Merged PR (from `is:merged` search) + code patterns found + config options found
 - Result: ✅ implemented (high confidence)
 
-**Scenario B: OPEN PR + no other evidence**
+**Scenario B: MERGED PR + code found (no config)**
+- Merged PR (from `is:merged` search) + code patterns found, but no config options
+- Result: ✅ implemented (medium confidence)
+
+**Scenario C: OPEN PR + no other evidence**
 - Open PR found, no merged PR, no code/config
 - Result: 🔄 needs_review
 
-**Scenario C: MERGED PR + OPEN PR**
+**Scenario D: MERGED PR + OPEN PR**
 - Merged PR (from `is:merged` search) + open PR found
 - Result: ✅ implemented (merged evidence takes precedence, open PR likely follow-up)
 - Note: This prevents false "needs_review" from unrelated open PRs
 
-**Scenario D: Code found + OPEN PR**
+**Scenario E: Code found + OPEN PR**
 - Code patterns/config found + open PR
 - Result: ✅ implemented (code evidence takes precedence)
 - Note: Open PR might be tangential or adding more to existing implementation
 
-**Scenario E: Code found only**
+**Scenario F: Code found only**
 - Code patterns found, but no PRs
 - Result: ✅ implemented (medium confidence - code only)
 - Note: Feature was implemented but PR may have been in different repo or not found by search
 
-**Scenario F: No evidence**
+**Scenario G: No evidence**
 - No PRs, no code/config matches
 - Result: ❌ not_implemented
 
-**Scenario G: MERGED PR only (no code)**
+**Scenario H: MERGED PR only (no code)**
 - Merged PR (from `is:merged` search), no code patterns found
 - Result: ✅ implemented (low confidence - PR only)
 - Note: Code search may have missed patterns, or code was in different format
