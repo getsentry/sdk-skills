@@ -382,19 +382,6 @@ Retry with: /sdk-feature-status {feature_name}
 | Rate limited | Return partial results, wait 60 min |
 | All SDKs fail | Skill fails, check `gh auth status` |
 
-## Verification
-
-After generating the report:
-
-1. **Spot-check 2-3 results**: Click PR links to verify they're actually about the feature
-2. **Check "not_implemented" SDKs**: Search GitHub UI manually for 1-2 to confirm no false negatives
-3. **Review "needs_review" items**: These require human judgment
-
-| Issue Type | Common Causes |
-|------------|---------------|
-| False positives | PRs that mention but don't implement; similar naming, different purpose |
-| False negatives | Feature under different name; implementation in unsearched sub-package |
-
 ## Search Command Reference
 
 ```bash
@@ -462,7 +449,6 @@ gh search issues "feature name" --repo {repo} --json number,title,state,url
 - Search accuracy depends on PR titles and code patterns
 - Cannot access private repos or uncommitted work
 - Results are point-in-time snapshots
-- Manual validation recommended for edge cases
 
 ## Dependencies
 
