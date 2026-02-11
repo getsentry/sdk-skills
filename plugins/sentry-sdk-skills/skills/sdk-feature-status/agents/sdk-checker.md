@@ -63,7 +63,7 @@ Return exactly this JSON structure:
 
 ```json
 {
-  "sdk": "{sdk_name}",
+  "name": "{sdk_name}",
   "repo": "{repo}",
   "path_filter": "{path_filter}" or null,
   "status": "implemented|needs_review|not_implemented|not_applicable|error",
