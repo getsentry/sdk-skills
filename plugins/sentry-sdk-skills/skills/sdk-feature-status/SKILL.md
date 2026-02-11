@@ -12,7 +12,9 @@ Check which Sentry SDKs have implemented a feature.
 
 | Input | Action |
 |-------|--------|
-| Develop doc URL | Extract feature, find reference PR, check all SDKs |
+| Docs PR URL | Extract feature from PR title, find reference PR, check all SDKs |
+| Develop doc URL | Extract feature from page title/URL, find reference PR, check all SDKs |
+| Doc URL with anchor | Extract feature from anchor (e.g., `#feature-flags`), find reference PR, check all SDKs |
 | Feature question | Extract keywords, search for reference implementation, check all SDKs |
 
 | Output | Location |
@@ -36,7 +38,16 @@ Check which Sentry SDKs have implemented a feature.
 
 **Examples:**
 ```bash
-/sdk-feature-status https://github.com/getsentry/sentry-docs/pull/12345
+# Docs PR
+/sdk-feature-status https://github.com/getsentry/sentry-docs/pull/16342
+
+# Develop doc URL
+/sdk-feature-status https://develop.sentry.dev/sdk/telemetry/replays/
+
+# Develop doc with anchor (for pages with multiple features)
+/sdk-feature-status https://develop.sentry.dev/sdk/expected-features/#feature-flags
+
+# Free-form question
 /sdk-feature-status Which SDKs have continuous profiling?
 ```
 
@@ -79,8 +90,18 @@ All SDKs in this table will be checked:
 
 ### Step 1: Parse Input
 
-- **If URL:** Extract feature from PR/doc title
-- **If question:** Extract keywords (e.g., "continuous profiling")
+**If URL, extract feature name:**
+
+| URL Type | Example | Extraction |
+|----------|---------|------------|
+| Docs PR | `github.com/getsentry/sentry-docs/pull/12345` | Feature name from PR title |
+| Develop doc | `develop.sentry.dev/sdk/profiling/` | "profiling" from path |
+| Doc with anchor | `develop.sentry.dev/sdk/features/#session-replay` | "session-replay" from anchor |
+
+**If question, extract keywords:**
+- Example: "Which SDKs have continuous profiling?" → keywords: `["continuous profiling"]`
+
+**Note:** Anchors are critical for pages documenting multiple features. Using `#session-replay` targets that specific feature instead of the entire page.
 
 ### Step 2: Find Reference Implementation
 
