@@ -147,57 +147,15 @@ Extract patterns from reference PR:
 
 ### Step 3: Check All SDKs in Parallel
 
-Launch 17 subagents (batches of 8-10) with this prompt template:
+Launch 17 subagents (batches of 8-10). See `agents/sdk-checker.md` for the subagent procedure.
 
-```
-Check if {sdk_name} has implemented {feature_name}.
+**Input for each subagent:**
+- SDK name, repository, and path_filter (from SDK list)
+- Search patterns extracted from reference implementation (keywords, code patterns, config options)
 
-Repository: {repo}
-Path filter: {path_filter} (empty if not needed)
-Search patterns:
-- Keywords: {keywords}
-- Code: {code_patterns}
-- Config: {config_options}
-
-Execute these searches:
-
-1. PR search (filter by path in PR title/body if path_filter provided):
-gh search prs --repo {repo} "{keywords}" --state all --limit 10 --json number,title,state,url,mergedAt
-
-2. Code search (CRITICAL: include path filter to avoid false matches):
-   - If path_filter is provided: gh search code --repo {repo} "{code_pattern} {path_filter}" --json path,repository
-   - If no path_filter: gh search code --repo {repo} "{code_pattern}" --json path,repository
-
-   Example for android: gh search code --repo getsentry/sentry-java "ClientReport path:sentry-android/" --json path,repository
-   Example for java: gh search code --repo getsentry/sentry-java "ClientReport path:sentry/" --json path,repository
-
-3. Issue search (if nothing found):
-gh search issues --repo {repo} "{keywords}" --json number,title,state,url
-
-IMPORTANT: When path_filter is provided, ONLY count code matches within that path.
-- For android (path:sentry-android/): ONLY files in sentry-android/ directory
-- For java (path:sentry/): ONLY files in sentry/ directory (NOT sentry-android/)
-
-Determine status:
-- ✅ implemented: Merged PR + code evidence found IN THE CORRECT PATH
-- ⚠️ needs_review: Open PR or unclear implementation
-- ❌ not_implemented: No evidence found IN THE CORRECT PATH
-- 🚫 not_applicable: Feature doesn't apply to this SDK type
-- ⚠️ error: gh command failed (include error message)
-
-Return this exact JSON:
-{
-  "sdk": "{sdk_name}",
-  "repo": "{repo}",
-  "path_filter": "{path_filter}" or null,
-  "status": "implemented|needs_review|not_implemented|not_applicable|error",
-  "pr_url": "https://..." or null,
-  "pr_number": 1234 or null,
-  "merged_date": "2024-01-15" or null,
-  "notes": "Brief finding (1 sentence, mention path if filtered)",
-  "error": null or "error message"
-}
-```
+**Output from each subagent:**
+- JSON object with status, PR info, and notes
+- See `agents/sdk-checker.md` for complete schema
 
 Collect all subagent results (JSON array).
 
