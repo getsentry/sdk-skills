@@ -94,9 +94,10 @@ All SDKs in this table will be checked:
 ### Step 1: Parse Input
 
 **If --retry flag with cache file:**
-1. Load cached results from file: `cat /tmp/sdk-feature-status-*.json`
-2. Extract feature name, patterns, and previous results from cache
-3. Skip to Step 3 (re-check failed/missing SDKs only)
+1. Extract the file path from the user's --retry argument (e.g., `/tmp/sdk-feature-status-1234567890.json`)
+2. Load cached results from that specific file: `cat /tmp/sdk-feature-status-1234567890.json`
+3. Parse JSON to extract feature name, patterns, and previous results from cache
+4. Skip to Step 3 (re-check only SDKs with status "error" or missing from cache)
 
 **If URL, extract feature name:**
 
@@ -306,7 +307,16 @@ Display cache path to user.
 Retry: /sdk-feature-status --retry /tmp/sdk-feature-status-1234567890.json
 ```
 
-**Retry logic:** Load cache → identify failed/missing SDKs → re-check only those → merge → display updated summary. Saves 2-5 minutes.
+**Retry logic:**
+1. Parse the user-provided cache file path from --retry argument
+2. Load JSON from that specific file (do NOT use wildcards)
+3. Identify SDKs to re-check: any with status="error" or completely missing from cache
+4. Re-run only those SDKs (skip SDKs with status="implemented", "needs_review", "not_implemented", "not_applicable")
+5. Merge new results with cached results (new results overwrite cached entries for re-checked SDKs)
+6. Display updated summary with all results
+7. Save merged results back to a new timestamped cache file
+
+This saves 2-5 minutes by avoiding re-checks of successful SDKs.
 
 ## Error Handling
 
