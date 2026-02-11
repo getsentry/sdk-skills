@@ -1,12 +1,12 @@
 ---
 name: sdk-feature-status
-description: Use this skill when the user asks about SDK feature implementation status, SDK parity, or cross-SDK coverage. Triggers include: develop doc URLs (github.com/getsentry/sentry-docs/...), questions like 'which SDKs have X?', 'does Python SDK have X?', 'SDK parity for feature Y', or requests to check feature rollout status. Note: Even single-SDK queries will check all 17 SDKs to provide parity context. Do NOT use for: SDK usage questions (how to use a feature), bug reports, SDK configuration help, or runtime behavior questions.
+description: Use this skill when the user asks about SDK feature implementation status, SDK parity, or cross-SDK coverage. Triggers include: develop doc URLs (github.com/getsentry/sentry-docs/...), questions like 'which SDKs have X?', 'does Python SDK have X?', 'SDK parity for feature Y', or requests to check feature rollout status. Note: Even single-SDK queries will check all SDKs to provide parity context. Do NOT use for: SDK usage questions (how to use a feature), bug reports, SDK configuration help, or runtime behavior questions.
 allowed-tools: Bash Task
 ---
 
 # SDK Feature Status Checker
 
-Check which of the 17 Sentry SDKs have implemented a feature.
+Check which Sentry SDKs have implemented a feature.
 
 ## Quick Reference
 
@@ -19,8 +19,7 @@ Check which of the 17 Sentry SDKs have implemented a feature.
 |--------|----------|
 | Formatted report | Displayed inline |
 
-**Coverage:** 17 SDKs (JavaScript, Python, Java, Android, Ruby, PHP, Go, .NET, Rust, Elixir, Cocoa, React Native, Flutter, Kotlin, Unity, Unreal, Native)
-**Duration:** 2-5 minutes
+**Coverage:** All SDKs listed in the SDK table below
 **Requires:** GitHub CLI (`gh`) with authentication
 
 ## ⚠️ Critical Requirements
@@ -41,11 +40,14 @@ Check which of the 17 Sentry SDKs have implemented a feature.
 /sdk-feature-status Which SDKs have continuous profiling?
 ```
 
-## SDK List (Check All 17)
+## SDK List
+
+All SDKs in this table will be checked:
 
 | SDK | Repository | Type | Path Filter | Notes |
 |-----|------------|------|-------------|-------|
 | `javascript` | `getsentry/sentry-javascript` | Frontend | - | Browser + Node.js environments |
+| `electron` | `getsentry/sentry-electron` | Desktop | - | Desktop applications |
 | `python` | `getsentry/sentry-python` | Backend | - | Full feature support |
 | `java` | `getsentry/sentry-java` | Backend | `path:sentry/ -path:sentry-android/` | Shares repo with Android |
 | `ruby` | `getsentry/sentry-ruby` | Backend | - | Full feature support |
@@ -54,16 +56,24 @@ Check which of the 17 Sentry SDKs have implemented a feature.
 | `dotnet` | `getsentry/sentry-dotnet` | Backend | - | Full feature support |
 | `rust` | `getsentry/sentry-rust` | Backend | - | Full feature support |
 | `elixir` | `getsentry/sentry-elixir` | Backend | - | Community-maintained |
+| `laravel` | `getsentry/sentry-laravel` | Framework | - | PHP framework integration |
+| `symfony` | `getsentry/sentry-symfony` | Framework | - | PHP framework integration |
 | `cocoa` | `getsentry/sentry-cocoa` | Mobile | - | iOS/macOS, profiling supported |
 | `android` | `getsentry/sentry-java` | Mobile | `path:sentry-android/` | Shares repo with Java, profiling supported |
 | `react-native` | `getsentry/sentry-react-native` | Mobile | - | Wraps JavaScript + native SDKs |
 | `flutter` | `getsentry/sentry-dart` | Mobile | - | Cross-platform mobile |
 | `kotlin` | `getsentry/sentry-kotlin-multiplatform` | Mobile | - | Multiplatform support |
+| `cordova` | `getsentry/sentry-cordova` | Mobile | - | Apache Cordova wrapper |
+| `capacitor` | `getsentry/sentry-capacitor` | Mobile | - | Ionic Capacitor wrapper |
 | `unity` | `getsentry/sentry-unity` | Gaming | - | Game engine specific |
+| `godot` | `getsentry/sentry-godot` | Gaming | - | Game engine specific |
 | `unreal` | `getsentry/sentry-unreal` | Gaming | - | Game engine specific, C++ based |
 | `native` | `getsentry/sentry-native` | Native | - | C/C++, limited feature set |
 
-**Note:** Path filters are required for SDKs sharing repositories. Notes column provides capability hints for "Not Applicable" status decisions.
+**Notes:**
+- Path filters are required for SDKs sharing repositories (Java/Android share `getsentry/sentry-java`)
+- The table above is the source of truth for which SDKs are checked
+- Notes column provides capability hints for "Not Applicable" status decisions
 
 ## Implementation
 
@@ -92,7 +102,7 @@ Extract patterns from reference PR:
 
 ### Step 3: Check All SDKs in Parallel
 
-Launch 17 subagents (batches of 8-10). See `agents/sdk-checker.md` for the subagent procedure.
+Launch one subagent per SDK in the table (in batches of 8-10 for performance). See `agents/sdk-checker.md` for the subagent procedure.
 
 **Input for each subagent:**
 - SDK name, repository, and path_filter (from SDK list)
