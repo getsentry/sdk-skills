@@ -45,27 +45,27 @@ Check which of the 17 Sentry SDKs have implemented a feature.
 
 ## SDK List (Check All 17)
 
-| SDK | Repository | Type | Path Filter |
-|-----|------------|------|-------------|
-| `javascript` | `getsentry/sentry-javascript` | Frontend | - |
-| `python` | `getsentry/sentry-python` | Backend | - |
-| `java` | `getsentry/sentry-java` | Backend | `path:sentry/` |
-| `ruby` | `getsentry/sentry-ruby` | Backend | - |
-| `php` | `getsentry/sentry-php` | Backend | - |
-| `go` | `getsentry/sentry-go` | Backend | - |
-| `dotnet` | `getsentry/sentry-dotnet` | Backend | - |
-| `rust` | `getsentry/sentry-rust` | Backend | - |
-| `elixir` | `getsentry/sentry-elixir` | Backend | - |
-| `cocoa` | `getsentry/sentry-cocoa` | Mobile | - |
-| `android` | `getsentry/sentry-java` | Mobile | `path:sentry-android/` |
-| `react-native` | `getsentry/sentry-react-native` | Mobile | - |
-| `flutter` | `getsentry/sentry-dart` | Mobile | - |
-| `kotlin` | `getsentry/sentry-kotlin-multiplatform` | Mobile | - |
-| `unity` | `getsentry/sentry-unity` | Gaming | - |
-| `unreal` | `getsentry/sentry-unreal` | Gaming | - |
-| `native` | `getsentry/sentry-native` | Native | - |
+| SDK | Repository | Type | Path Filter | Notes |
+|-----|------------|------|-------------|-------|
+| `javascript` | `getsentry/sentry-javascript` | Frontend | - | Browser + Node.js environments |
+| `python` | `getsentry/sentry-python` | Backend | - | Full feature support |
+| `java` | `getsentry/sentry-java` | Backend | `path:sentry/` | Shares repo with Android |
+| `ruby` | `getsentry/sentry-ruby` | Backend | - | Full feature support |
+| `php` | `getsentry/sentry-php` | Backend | - | Full feature support |
+| `go` | `getsentry/sentry-go` | Backend | - | Full feature support |
+| `dotnet` | `getsentry/sentry-dotnet` | Backend | - | Full feature support |
+| `rust` | `getsentry/sentry-rust` | Backend | - | Full feature support |
+| `elixir` | `getsentry/sentry-elixir` | Backend | - | Community-maintained |
+| `cocoa` | `getsentry/sentry-cocoa` | Mobile | - | iOS/macOS, profiling supported |
+| `android` | `getsentry/sentry-java` | Mobile | `path:sentry-android/` | Shares repo with Java, profiling supported |
+| `react-native` | `getsentry/sentry-react-native` | Mobile | - | Wraps JavaScript + native SDKs |
+| `flutter` | `getsentry/sentry-dart` | Mobile | - | Cross-platform mobile |
+| `kotlin` | `getsentry/sentry-kotlin-multiplatform` | Mobile | - | Multiplatform support |
+| `unity` | `getsentry/sentry-unity` | Gaming | - | Game engine specific |
+| `unreal` | `getsentry/sentry-unreal` | Gaming | - | Game engine specific, C++ based |
+| `native` | `getsentry/sentry-native` | Native | - | C/C++, limited feature set |
 
-**Note:** Path filters are required for SDKs that share repositories. Android and Java both use `getsentry/sentry-java` but have separate codebases in different directories.
+**Note:** Path filters are required for SDKs sharing repositories. Notes column provides capability hints for "Not Applicable" status decisions.
 
 ## Implementation
 
