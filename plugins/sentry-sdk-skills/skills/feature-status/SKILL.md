@@ -43,59 +43,6 @@ Check which of the 17 Sentry SDKs have implemented a feature.
 /sdk-feature-status Which SDKs have continuous profiling?
 ```
 
-## Output Schema
-
-### feature-status.json (optional)
-```json
-{
-  "feature": "client-reports",
-  "timestamp": "2024-01-15T12:00:00Z",
-  "develop_doc": {"url": "https://...", "type": "pr"},
-  "reference_implementation": {
-    "sdk": "javascript",
-    "repo": "getsentry/sentry-javascript",
-    "pr_url": "https://...",
-    "pr_number": 6789
-  },
-  "search_patterns": {
-    "keywords": ["client reports"],
-    "code_patterns": ["class ClientReportManager"],
-    "config_options": ["sendClientReports"]
-  },
-  "summary": {
-    "implemented": 5,
-    "needs_review": 2,
-    "not_implemented": 8,
-    "not_applicable": 1,
-    "errors": 1
-  },
-  "sdks": [
-    {
-      "name": "python",
-      "repo": "getsentry/sentry-python",
-      "path_filter": null,
-      "status": "implemented|needs_review|not_implemented|not_applicable|error",
-      "pr_url": "https://..." or null,
-      "pr_number": 1234 or null,
-      "merged_date": "2024-01-15" or null,
-      "notes": "Brief summary",
-      "error": null or "error message"
-    },
-    {
-      "name": "android",
-      "repo": "getsentry/sentry-java",
-      "path_filter": "path:sentry-android/",
-      "status": "implemented",
-      "pr_url": "https://...",
-      "pr_number": 1234,
-      "merged_date": "2024-01-15",
-      "notes": "Found in sentry-android/ directory",
-      "error": null
-    }
-  ]
-}
-```
-
 ## SDK List (Check All 17)
 
 | SDK | Repository | Type | Path Filter |
@@ -244,22 +191,6 @@ Then confirm:
 ✅ Saved: .sdk-align/feature-status.json
 ```
 
-## Verification
-
-After generating the report:
-
-1. **Spot-check 2-3 results**: Click PR links to verify they're actually about the feature
-2. **Check "not_implemented" SDKs**: Search GitHub UI manually for 1-2 to confirm no false negatives
-3. **Review "needs_review" items**: These require human judgment
-
-**Common false positives:**
-- PRs that mention the feature but don't implement it
-- Code that has similar naming but different purpose
-
-**Common false negatives:**
-- Feature implemented under different name
-- Implementation in a sub-package not searched
-
 ## Error Handling
 
 **SDK check fails:**
@@ -280,6 +211,75 @@ After generating the report:
 **All checks fail:**
 - Skill fails with clear error
 - Check: `gh auth status`, network, API limits
+
+## Verification
+
+After generating the report:
+
+1. **Spot-check 2-3 results**: Click PR links to verify they're actually about the feature
+2. **Check "not_implemented" SDKs**: Search GitHub UI manually for 1-2 to confirm no false negatives
+3. **Review "needs_review" items**: These require human judgment
+
+**Common false positives:**
+- PRs that mention the feature but don't implement it
+- Code that has similar naming but different purpose
+
+**Common false negatives:**
+- Feature implemented under different name
+- Implementation in a sub-package not searched
+
+## Output Schema
+
+### feature-status.json (optional)
+```json
+{
+  "feature": "client-reports",
+  "timestamp": "2024-01-15T12:00:00Z",
+  "develop_doc": {"url": "https://...", "type": "pr"},
+  "reference_implementation": {
+    "sdk": "javascript",
+    "repo": "getsentry/sentry-javascript",
+    "pr_url": "https://...",
+    "pr_number": 6789
+  },
+  "search_patterns": {
+    "keywords": ["client reports"],
+    "code_patterns": ["class ClientReportManager"],
+    "config_options": ["sendClientReports"]
+  },
+  "summary": {
+    "implemented": 5,
+    "needs_review": 2,
+    "not_implemented": 8,
+    "not_applicable": 1,
+    "errors": 1
+  },
+  "sdks": [
+    {
+      "name": "python",
+      "repo": "getsentry/sentry-python",
+      "path_filter": null,
+      "status": "implemented|needs_review|not_implemented|not_applicable|error",
+      "pr_url": "https://..." or null,
+      "pr_number": 1234 or null,
+      "merged_date": "2024-01-15" or null,
+      "notes": "Brief summary",
+      "error": null or "error message"
+    },
+    {
+      "name": "android",
+      "repo": "getsentry/sentry-java",
+      "path_filter": "path:sentry-android/",
+      "status": "implemented",
+      "pr_url": "https://...",
+      "pr_number": 1234,
+      "merged_date": "2024-01-15",
+      "notes": "Found in sentry-android/ directory",
+      "error": null
+    }
+  ]
+}
+```
 
 ## Search Command Reference
 
