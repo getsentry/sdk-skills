@@ -1,6 +1,6 @@
 ---
 name: sdk-feature-status
-description: Use this skill when the user asks about SDK feature implementation status, SDK parity, or cross-SDK coverage. Triggers include: develop doc URLs (github.com/getsentry/sentry-docs/...), questions like 'which SDKs have X?', 'is X implemented in Python SDK?', 'SDK parity for feature Y', or requests to check feature rollout status. Do NOT use for: SDK usage questions (how to use a feature), bug reports, SDK configuration help, or questions about a single SDK's behavior.
+description: Use this skill when the user asks about SDK feature implementation status, SDK parity, or cross-SDK coverage. Triggers include: develop doc URLs (github.com/getsentry/sentry-docs/...), questions like 'which SDKs have X?', 'does Python SDK have X?', 'SDK parity for feature Y', or requests to check feature rollout status. Note: Even single-SDK queries will check all 17 SDKs to provide parity context. Do NOT use for: SDK usage questions (how to use a feature), bug reports, SDK configuration help, or runtime behavior questions.
 allowed-tools: Bash Task
 ---
 
@@ -14,7 +14,6 @@ Check which of the 17 Sentry SDKs have implemented a feature.
 |-------|--------|
 | Develop doc URL | Extract feature, find reference PR, check all SDKs |
 | Feature question | Extract keywords, search for reference implementation, check all SDKs |
-| SDK-specific question | Check single SDK only |
 
 | Output | Location |
 |--------|----------|
