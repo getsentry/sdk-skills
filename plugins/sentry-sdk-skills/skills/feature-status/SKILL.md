@@ -244,6 +244,22 @@ Then confirm:
 ✅ Saved: .sdk-align/feature-status.json
 ```
 
+## Verification
+
+After generating the report:
+
+1. **Spot-check 2-3 results**: Click PR links to verify they're actually about the feature
+2. **Check "not_implemented" SDKs**: Search GitHub UI manually for 1-2 to confirm no false negatives
+3. **Review "needs_review" items**: These require human judgment
+
+**Common false positives:**
+- PRs that mention the feature but don't implement it
+- Code that has similar naming but different purpose
+
+**Common false negatives:**
+- Feature implemented under different name
+- Implementation in a sub-package not searched
+
 ## Error Handling
 
 **SDK check fails:**
