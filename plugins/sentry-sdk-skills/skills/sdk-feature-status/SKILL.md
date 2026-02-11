@@ -18,7 +18,6 @@ Check which of the 17 Sentry SDKs have implemented a feature.
 | Output | Location |
 |--------|----------|
 | Formatted report | Displayed inline |
-| Machine-readable JSON | `.sdk-align/feature-status.json` (optional) |
 
 **Coverage:** 17 SDKs (JavaScript, Python, Java, Android, Ruby, PHP, Go, .NET, Rust, Elixir, Cocoa, React Native, Flutter, Kotlin, Unity, Unreal, Native)
 **Duration:** 2-5 minutes
@@ -33,7 +32,7 @@ Check which of the 17 Sentry SDKs have implemented a feature.
 ## Usage
 
 **Input:** Develop doc URL or free-form question
-**Output:** Formatted table + optional machine-readable JSON
+**Output:** Formatted table with status summary
 **Time:** 2-5 minutes
 
 **Examples:**
@@ -150,46 +149,6 @@ Next Steps:
 → Retry: {list} (if errors)
 ```
 
-### Step 5: Optional Machine-Readable Output
-
-After displaying the formatted report, ask the user:
-
-**"Would you like me to save a machine-readable JSON report?"**
-
-If yes, create `.sdk-align/` directory in current working directory and write `feature-status.json`:
-
-```json
-{
-  "feature": "<name>",
-  "timestamp": "<ISO8601>",
-  "develop_doc": {"url": "<url>", "type": "pr|commit|url"},
-  "reference_implementation": {
-    "sdk": "<sdk>",
-    "repo": "<repo>",
-    "pr_url": "<url>",
-    "pr_number": <num>
-  },
-  "search_patterns": {
-    "keywords": ["<kw1>", "<kw2>"],
-    "code_patterns": ["<pattern1>"],
-    "config_options": ["<opt1>"]
-  },
-  "summary": {
-    "implemented": <count>,
-    "needs_review": <count>,
-    "not_implemented": <count>,
-    "not_applicable": <count>,
-    "errors": <count>
-  },
-  "sdks": [<array of subagent results>]
-}
-```
-
-Then confirm:
-```
-✅ Saved: .sdk-align/feature-status.json
-```
-
 ## Error Handling
 
 | Failure Mode | Behavior |
@@ -211,59 +170,6 @@ After generating the report:
 |------------|---------------|
 | False positives | PRs that mention but don't implement; similar naming, different purpose |
 | False negatives | Feature under different name; implementation in unsearched sub-package |
-
-## Output Schema
-
-### feature-status.json (optional)
-```json
-{
-  "feature": "client-reports",
-  "timestamp": "2024-01-15T12:00:00Z",
-  "develop_doc": {"url": "https://...", "type": "pr"},
-  "reference_implementation": {
-    "sdk": "javascript",
-    "repo": "getsentry/sentry-javascript",
-    "pr_url": "https://...",
-    "pr_number": 6789
-  },
-  "search_patterns": {
-    "keywords": ["client reports"],
-    "code_patterns": ["class ClientReportManager"],
-    "config_options": ["sendClientReports"]
-  },
-  "summary": {
-    "implemented": 5,
-    "needs_review": 2,
-    "not_implemented": 8,
-    "not_applicable": 1,
-    "errors": 1
-  },
-  "sdks": [
-    {
-      "name": "python",
-      "repo": "getsentry/sentry-python",
-      "path_filter": null,
-      "status": "implemented|needs_review|not_implemented|not_applicable|error",
-      "pr_url": "https://..." or null,
-      "pr_number": 1234 or null,
-      "merged_date": "2024-01-15" or null,
-      "notes": "Brief summary",
-      "error": null or "error message"
-    },
-    {
-      "name": "android",
-      "repo": "getsentry/sentry-java",
-      "path_filter": "path:sentry-android/",
-      "status": "implemented",
-      "pr_url": "https://...",
-      "pr_number": 1234,
-      "merged_date": "2024-01-15",
-      "notes": "Found in sentry-android/ directory",
-      "error": null
-    }
-  ]
-}
-```
 
 ## Search Command Reference
 
