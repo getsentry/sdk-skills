@@ -100,13 +100,19 @@ Return exactly this JSON structure:
   "path_filter": "{path_filter}" or null,
   "status": "implemented|needs_review|not_implemented|not_applicable|error",
   "confidence": "high|medium|low" or null,
-  "pr_url": "https://..." or null,
+  "pr_url": "https://github.com/{repo}/pull/{pr_number}" or null,
   "pr_number": 1234 or null,
   "merged_date": "2024-01-15" or null,
   "notes": "Brief finding (1 sentence, mention path if filtered)",
   "error": null or "error message"
 }
 ```
+
+**Field requirements:**
+- `pr_url`: MUST be the full GitHub URL when PR found (use `url` field from `gh search prs` output)
+- `pr_number`: Extract from PR URL or use `number` field from search results
+- `merged_date`: Use `closedAt` field from search results, format as YYYY-MM-DD
+- `notes`: Keep concise, use for reasons (not_applicable) or context (implemented with path filter)
 
 **Confidence field** (only for status = "implemented"):
 - **high**: Merged PR found + code patterns found + config options found

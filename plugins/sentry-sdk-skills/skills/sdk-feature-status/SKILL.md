@@ -191,17 +191,31 @@ Launch subagents in parallel batches while displaying results incrementally as t
 
 #### 3.1 Display Initial Header
 
-Show header immediately before launching subagents:
+Show header immediately before launching subagents using GitHub-flavored markdown:
 
+```markdown
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SDK Feature Status: `{feature_name}`
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+**Reference**: `{sdk}` ([`{repo}`#{pr}](https://github.com/{repo}/pull/{pr})), merged `{date}`
+**Develop Doc**: [{url}]({url})
+
+Checking **{total}** SDKs...
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
+
+**Example:**
+```markdown
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-SDK Feature Status: {feature_name}
+SDK Feature Status: `client reports`
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Reference: {sdk} ({repo}#{pr}, merged {date})
-Develop Doc: {url}
+**Reference**: `python` ([`getsentry/sentry-python`#1234](https://github.com/getsentry/sentry-python/pull/1234)), merged `2024-01-15`
+**Develop Doc**: [https://develop.sentry.dev/sdk/features/](https://develop.sentry.dev/sdk/features/)
 
-Checking {total} SDKs...
+Checking **23** SDKs...
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
@@ -242,43 +256,63 @@ Use Task tool with:
 Stream results immediately as subagents return (don't wait for batch completion).
 
 **Display format by status:**
-```
-✅ python  #1234  2024-01-15  [HIGH]  getsentry/sentry-python
-✅ java    #5678  2024-02-01  [MED]   getsentry/sentry-java
-🔄 android  #9012  (open)  getsentry/sentry-java
-❌ flutter  getsentry/sentry-dart
-🚫 native  getsentry/sentry-native  (reason)
-⚠️  rust  getsentry/sentry-rust  (error message)
+
+Each result line follows this format (use GitHub-flavored markdown):
+- ✅ **implemented**: `{sdk}` [#{pr_number}]({pr_url}) `{merged_date}` `[{CONFIDENCE}]` `{repo}`
+- 🔄 **needs_review**: `{sdk}` [#{pr_number}]({pr_url}) *(open)* `{repo}`
+- ❌ **not_implemented**: `{sdk}` `{repo}`
+- 🚫 **not_applicable**: `{sdk}` `{repo}` *({reason})*
+- ⚠️ **error**: `{sdk}` `{repo}` *({error_message})*
+
+**Example output:**
+```markdown
+✅ `python` [#1234](https://github.com/getsentry/sentry-python/pull/1234) `2024-01-15` `[HIGH]` `getsentry/sentry-python`
+✅ `java` [#5678](https://github.com/getsentry/sentry-java/pull/5678) `2024-02-01` `[MED]` `getsentry/sentry-java`
+🔄 `android` [#9012](https://github.com/getsentry/sentry-java/pull/9012) *(open)* `getsentry/sentry-java`
+❌ `flutter` `getsentry/sentry-dart`
+🚫 `native` `getsentry/sentry-native` *(C/C++ SDK, no HTTP instrumentation)*
+⚠️ `rust` `getsentry/sentry-rust` *(rate limited)*
 ```
 
+**Formatting notes:**
+- SDK names, dates, confidence levels, and repos use inline code (backticks)
+- PR links: Use agent's `pr_url` if available, otherwise construct from `repo` and `pr_number`: `https://github.com/{repo}/pull/{pr_number}`
+- Reasons/errors use italics for secondary information
+- All markdown must render correctly on GitHub
+
 **Confidence levels** (for "implemented" only):
-- **HIGH**: PR + code + config | **MED**: PR + code OR code only | **LOW**: PR only or weak signal
+- `[HIGH]`: PR + code + config
+- `[MED]`: PR + code OR code only
+- `[LOW]`: PR only or weak signal
 
 Optionally show progress counter: `[3/23]`, `[4/23]`. Between batches, display: "Checking next batch..."
 
 ### Step 4: Display Final Summary
 
-After all subagents complete (or timeout after 10 minutes), display summary section:
+After all subagents complete (or timeout after 10 minutes), display summary section using GitHub-flavored markdown:
 
-```
+```markdown
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Summary
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-12 implemented ✅
-2 in review 🔄
-7 need implementation ❌
-1 not applicable 🚫
-1 error ⚠️
+**12** implemented ✅
+**2** in review 🔄
+**7** need implementation ❌
+**1** not applicable 🚫
+**1** error ⚠️
 
-Next Steps:
-→ Implement in: flutter, rust, elixir, native, unity, unreal, godot
-→ Review PRs: java (#5678), android (#9012)
-→ Retry: cordova (wait 60 min for rate limit reset)
+**Next Steps:**
+- **Implement in**: `flutter`, `rust`, `elixir`, `native`, `unity`, `unreal`, `godot`
+- **Review PRs**: `java` ([#5678](https://github.com/getsentry/sentry-java/pull/5678)), `android` ([#9012](https://github.com/getsentry/sentry-java/pull/9012))
+- **Retry failed**: `cordova` *(wait 60 min for rate limit reset)*
 ```
 
 **Summary calculation:**
-- Count by status, list actionable SDKs, include PR numbers for "needs_review"
+- Count by status with bold numbers
+- List actionable SDKs with inline code formatting
+- Include PR links (not just numbers) for "needs_review"
+- Format errors/reasons in italics
 
 #### 4.1 Save Results & Incremental Retry
 
@@ -299,12 +333,16 @@ Save results to `/tmp/sdk-feature-status-{timestamp}.json` with this schema:
 }
 ```
 
-Display cache path to user.
+Display cache path to user using inline code formatting.
 
 **On timeout/errors, suggest retry:**
+```markdown
+⚠️ **Timeout reached.** Results cached to: `/tmp/sdk-feature-status-1234567890.json`
+
+**Retry command:**
+```bash
+/sdk-feature-status --retry /tmp/sdk-feature-status-1234567890.json
 ```
-⚠️  Timeout reached. Results cached to: /tmp/sdk-feature-status-1234567890.json
-Retry: /sdk-feature-status --retry /tmp/sdk-feature-status-1234567890.json
 ```
 
 **Retry logic:**
