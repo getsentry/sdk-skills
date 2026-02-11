@@ -18,13 +18,18 @@ Check if a single SDK has implemented a feature.
 Search all PR states (open, closed, merged) by omitting --state flag:
 
 ```bash
-gh search prs --repo {repo} "{keywords}" --limit 10 --json number,title,state,url,mergedAt
+gh search prs --repo {repo} "{keywords}" --limit 10 --json number,title,state,url,closedAt
 ```
 
 ### 2. Code Search
 
+Search for BOTH code patterns AND config options. Config options are often the most reliable indicators of feature implementation.
+
+**Search order:** Search all code_patterns first, then all config_options. Aggregate results.
+
 **CRITICAL**: Include path filter to avoid false matches in shared repositories.
 
+**For each pattern in code_patterns:**
 - **If path_filter is provided**:
   ```bash
   gh search code --repo {repo} "{code_pattern} {path_filter}" --json path,repository
@@ -35,19 +40,39 @@ gh search prs --repo {repo} "{keywords}" --limit 10 --json number,title,state,ur
   gh search code --repo {repo} "{code_pattern}" --json path,repository
   ```
 
+**For each option in config_options:**
+- **If path_filter is provided**:
+  ```bash
+  gh search code --repo {repo} "{config_option} {path_filter}" --json path,repository
+  ```
+
+- **If no path_filter**:
+  ```bash
+  gh search code --repo {repo} "{config_option}" --json path,repository
+  ```
+
 **Examples for shared repo:**
 ```bash
-# Android in getsentry/sentry-java
+# Android in getsentry/sentry-java - code pattern
 gh search code --repo getsentry/sentry-java "ClientReport path:sentry-android/" --json path,repository
+
+# Android - config option
+gh search code --repo getsentry/sentry-java "sendClientReports path:sentry-android/" --json path,repository
 
 # Java in getsentry/sentry-java (with negative filter to exclude Android)
 gh search code --repo getsentry/sentry-java "ClientReport path:sentry/ -path:sentry-android/" --json path,repository
+gh search code --repo getsentry/sentry-java "send_client_reports path:sentry/ -path:sentry-android/" --json path,repository
 ```
 
 **IMPORTANT**: When path_filter is provided, ONLY count code matches within that path.
 - For android (`path:sentry-android/`): ONLY files in `sentry-android/` directory
 - For java (`path:sentry/ -path:sentry-android/`): ONLY files in `sentry/` directory, explicitly excluding `sentry-android/`
 - The negative filter `-path:sentry-android/` is CRITICAL to prevent false positives from substring matching
+
+**Result aggregation:**
+- Track whether code patterns were found: `has_code_pattern = true/false`
+- Track whether config options were found: `has_config_option = true/false`
+- Use both for confidence calculation (see Output section)
 
 ### 3. Issue Search
 
@@ -77,10 +102,12 @@ Return exactly this JSON structure:
 ```
 
 **Confidence field** (only for status = "implemented"):
-- **high**: Merged PR found + code evidence + config option found
-- **medium**: Merged PR + code evidence (no config), OR code evidence only (no PR found)
-- **low**: Merged PR mention only (no code evidence), OR single weak signal
+- **high**: Merged PR found + code patterns found + config options found
+- **medium**: Merged PR + code patterns found (no config options), OR code patterns/config options found but no PR, OR config options found alone (config options are highly distinctive)
+- **low**: Merged PR mention only (no code evidence), OR single weak signal, OR only generic code patterns found
 - **null**: For all other statuses (needs_review, not_implemented, not_applicable, error)
+
+**Note**: Config options alone can justify "medium" confidence because option names like `sendClientReports` or `maxRequestBodySize` are highly distinctive and unlikely to appear unless the feature is implemented.
 
 ## Status Determination
 
