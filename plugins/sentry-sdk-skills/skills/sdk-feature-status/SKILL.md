@@ -103,41 +103,171 @@ All SDKs in this table will be checked:
 
 **Note:** Anchors are critical for pages documenting multiple features. Using `#session-replay` targets that specific feature instead of the entire page.
 
-### Step 2: Find Reference Implementation
+### Step 2: Find Reference Implementation and Extract Patterns
 
-Search for earliest merged PR:
+This step is critical for accuracy. Extract search patterns from a reference implementation to find the feature across all SDKs.
+
+#### 2.1 Find Reference PR
+
+Search for earliest merged SDK PR:
 ```bash
-# By develop doc
+# By develop doc (if PR link is in the doc)
 gh search prs "sentry-docs/pull/12345" org:getsentry --json url,repository,number,mergedAt
 
 # By keywords (search merged PRs only)
 gh search prs "client reports is:merged" org:getsentry --limit 20 --json url,repository,number,title,mergedAt
 ```
 
-Filter to SDK repos only (exclude `sentry`, `sentry-docs`, `develop`).
+Filter results:
+- **Include**: SDK repos from the SDK List table
+- **Exclude**: `getsentry/sentry`, `getsentry/sentry-docs`, `getsentry/develop`
+- **Sort**: By `mergedAt` date (earliest first)
+- **Select**: First result as reference implementation
 
-Extract patterns from reference PR:
-- Class names: `ClientReportManager`, `ClientReportRecorder`
-- Config options: `sendClientReports`, `send_client_reports`
-- Function names: `sendClientReport`, `recordClientReport`
+If no results found, skip to Step 3 using only the keywords from Step 1.
 
-### Step 3: Check All SDKs in Parallel
+#### 2.2 Fetch PR Details
 
-Launch one subagent per SDK in the table (in batches of 8-10 for performance). See `agents/sdk-checker.md` for the subagent procedure.
+Get full PR information:
+```bash
+gh pr view {pr_number} --repo {repo} --json title,body,files
+```
 
-**Input for each subagent:**
-- SDK name, repository, and path_filter (from SDK list)
-- Search patterns extracted from reference implementation (keywords, code patterns, config options)
+This returns:
+- `title`: PR title (e.g., "Add Client Reports to Python SDK")
+- `body`: PR description with code examples
+- `files`: List of changed files with paths
 
-**Output from each subagent:**
-- JSON object with status, PR info, and notes
-- See `agents/sdk-checker.md` for complete schema
+#### 2.3 Extract Patterns
 
-Collect all subagent results (JSON array).
+Use the following algorithm to extract search patterns from the reference PR.
 
-### Step 4: Generate Report
+**A. Extract Feature Name from Title**
 
-**Display formatted report:**
+```
+Input: "feat(python): Add Client Reports support"
+Steps:
+  1. Remove prefixes: "feat:", "Add ", "Implement ", "feature:", "fix:"
+  2. Remove SDK references: "to Python SDK", "for iOS", "(python)"
+  3. Remove suffixes: " support", " feature"
+  4. Result: "Client Reports"
+```
+
+Common patterns:
+- "Add {feature}" → {feature}
+- "Implement {feature} for {SDK}" → {feature}
+- "feat({sdk}): {feature}" → {feature}
+
+**B. Extract Code Patterns from Body**
+
+Parse the PR body markdown:
+
+1. **Find code blocks**: Look for fenced code blocks (triple backticks) and inline code (single backticks)
+
+2. **Extract class/interface names**:
+   - Pattern: `[A-Z][a-zA-Z0-9]+` (CamelCase starting with capital)
+   - Examples: `ClientReportManager`, `IClientReporter`, `ClientReportRecorder`
+   - Filter out common words: `String`, `Boolean`, `Integer`, `Object`, `Array`
+
+3. **Extract function/method names**:
+   - Pattern: `[a-z][a-zA-Z0-9]+\(` (identifier followed by opening paren)
+   - Examples: `sendClientReport(`, `recordLostEvent(`, `flushReports(`
+
+4. **Extract configuration keys**:
+   - Look for JSON/YAML structures: `"key": value` or `key: value`
+   - Look for dict/object literals: `{...}`
+   - Common config patterns: `enable*`, `send*`, `*Enabled`, `*Reports`
+   - Examples: `sendClientReports`, `enableClientReports`, `client_reports_enabled`
+
+**C. Extract Patterns from File Paths**
+
+From the `files` field, examine file paths for naming clues:
+
+```bash
+# Example file paths:
+sentry/client_reports.py          → "client_reports"
+Sources/ClientReportManager.swift → "ClientReportManager"
+client-report-manager.ts          → "client-report-manager"
+```
+
+Extraction rules:
+- Take filename without extension
+- Prefer newly added files over modified files
+- Skip test files, docs, and config files
+- Extract last path component (e.g., `src/core/reports.ts` → `reports`)
+
+**D. Generate Language Variants**
+
+Given a base pattern (e.g., `ClientReport`), generate all naming convention variants:
+
+| Convention | Base | With Suffix |
+|------------|------|-------------|
+| CamelCase | `ClientReport` | `ClientReportManager`, `ClientReports` |
+| camelCase | `clientReport` | `clientReportManager`, `clientReports` |
+| snake_case | `client_report` | `client_report_manager`, `client_reports` |
+| kebab-case | `client-report` | `client-report-manager`, `client-reports` |
+
+Common suffixes: `Manager`, `Recorder`, `Handler`, `Service`, `Reporter`, `s` (plural)
+
+**E. Categorize into Pattern Groups**
+
+Organize extracted patterns into three categories:
+
+```json
+{
+  "keywords": [
+    "client reports",
+    "client reporting",
+    "client report"
+  ],
+  "code_patterns": [
+    "ClientReport",
+    "ClientReportManager",
+    "ClientReportRecorder",
+    "client_report",
+    "client_report_manager"
+  ],
+  "config_options": [
+    "sendClientReports",
+    "send_client_reports",
+    "enableClientReports",
+    "client_reports_enabled"
+  ]
+}
+```
+
+Deduplication: Remove exact duplicates, keep case variations.
+
+**F. Fallback Strategy**
+
+If extraction yields fewer than 3 total patterns:
+
+1. Use feature name from Step 1 as primary keyword
+2. Generate variants:
+   - Original: "session replay"
+   - CamelCase: "SessionReplay"
+   - snake_case: "session_replay"
+   - kebab-case: "session-replay"
+3. Add to keywords list
+4. Continue to Step 3
+
+**G. Pattern Selection for Search**
+
+Use top patterns by frequency:
+- Top 5 most common code_patterns
+- Top 3 most common config_options
+- All keywords (typically 1-3)
+
+This prevents search query overload while maintaining coverage.
+
+### Step 3: Check All SDKs with Streaming Output
+
+Launch subagents in parallel batches while displaying results incrementally as they complete.
+
+#### 3.1 Display Initial Header
+
+Show header immediately before launching subagents:
+
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 SDK Feature Status: {feature_name}
@@ -146,38 +276,101 @@ SDK Feature Status: {feature_name}
 Reference: {sdk} ({repo}#{pr}, merged {date})
 Develop Doc: {url}
 
+Checking {total} SDKs...
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
 
-✅ Implemented (X)
-  {sdk}  #{pr}  {date}  {repo}
-  ...
+This provides immediate feedback and context while subagents execute.
 
-⚠️  Needs Review (X)
-  {sdk}  #{pr}  (open)  {repo}
-  ...
+#### 3.2 Launch Subagents in Batches
 
-❌ Not Implemented (X)
-  {sdk}  {repo}
-  ...
+Execute in 2-3 batches to balance parallelism vs API rate limits:
 
-🚫 Not Applicable (X)
-  {sdk}  {repo}  {reason}
+- **Batch 1** (10 SDKs): `javascript`, `python`, `java`, `android`, `ruby`, `php`, `go`, `dotnet`, `cocoa`, `react-native`
+- **Batch 2** (10 SDKs): `rust`, `flutter`, `unity`, `electron`, `elixir`, `laravel`, `symfony`, `kotlin`, `native`, `unreal`
+- **Batch 3** (3 SDKs): `cordova`, `capacitor`, `godot`
 
-⚠️  Errors (X)
-  {sdk}  {repo}  {error}
+For each SDK, launch a subagent with these inputs:
+- SDK name, repository, and path_filter (from SDK List table)
+- Search patterns from Step 2 (keywords, code_patterns, config_options)
 
+See `agents/sdk-checker.md` for complete subagent procedure and output schema.
+
+#### 3.3 Display Results as They Complete
+
+**Critical: Stream results immediately, don't wait for batch completion.**
+
+As each subagent returns a result, display it in the appropriate category:
+
+**For status = "implemented":**
+```
+✅ python  #1234  2024-01-15  getsentry/sentry-python
+```
+
+**For status = "needs_review":**
+```
+⚠️  java  #5678  (open)  getsentry/sentry-java
+```
+
+**For status = "not_implemented":**
+```
+❌ flutter  getsentry/sentry-dart
+```
+
+**For status = "not_applicable":**
+```
+🚫 native  getsentry/sentry-native  (Limited feature set)
+```
+
+**For status = "error":**
+```
+⚠️  rust  getsentry/sentry-rust  (Rate limited)
+```
+
+**Progress indicator**: Optionally show `[3/23]`, `[4/23]`, etc. after each result.
+
+#### 3.4 Handle Batch Transitions
+
+Between batches, optionally display:
+```
+Checking next batch...
+```
+
+This helps users understand why there might be brief pauses.
+
+### Step 4: Display Final Summary
+
+After all subagents complete (or timeout after 5 minutes), display summary section:
+
+```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Summary
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-X implemented ✅
-X in review ⚠️
-X need implementation ❌
+12 implemented ✅
+2 in review ⚠️
+7 need implementation ❌
+1 not applicable 🚫
+1 error ⚠️
 
 Next Steps:
-→ Implement in: {list}
-→ Review PRs: {list}
-→ Retry: {list} (if errors)
+→ Implement in: flutter, rust, elixir, native, unity, unreal, godot
+→ Review PRs: java (#5678), android (#9012)
+→ Retry: cordova (wait 60 min for rate limit reset)
+```
+
+**Summary calculation:**
+- Count results by status
+- List SDK names for actionable items
+- Include PR numbers for "needs_review" items
+- Provide specific guidance for errors (wait time, auth check, etc.)
+
+**If timeout reached:**
+```
+⚠️  Timeout: 5 minutes reached, showing partial results.
+Missing: {sdk_list}
+Retry with: /sdk-feature-status {feature_name}
 ```
 
 ## Error Handling
@@ -209,6 +402,9 @@ After generating the report:
 gh search prs "keywords" --repo {repo} --limit 10 --json number,title,state,url,mergedAt
 gh search prs "sentry-docs/pull/123" org:getsentry --json url,repository,number,mergedAt
 gh search prs "in:title keywords is:merged" --repo {repo} --json number,title,url,mergedAt
+
+# PR detail fetch (for pattern extraction)
+gh pr view {pr_number} --repo {repo} --json title,body,files
 
 # Code search (without path filter)
 gh search code "class ClassName" --repo {repo} --json path,repository
