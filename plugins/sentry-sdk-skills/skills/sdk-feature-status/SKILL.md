@@ -120,14 +120,16 @@ This step is critical for accuracy. Extract search patterns from a reference imp
 
 #### 2.1 Find Reference PR
 
-Search for best reference SDK PR:
+Search for best reference SDK PR (merged PRs only):
 ```bash
 # By develop doc (if PR link is in the doc)
-gh search prs "sentry-docs/pull/12345" org:getsentry --json url,repository,number,closedAt
+gh search prs "sentry-docs/pull/12345 is:merged" org:getsentry --json url,repository,number,closedAt
 
 # By keywords (search merged PRs only)
 gh search prs "client reports is:merged" org:getsentry --limit 20 --json url,repository,number,title,closedAt
 ```
+
+**Note:** The `is:merged` qualifier ensures we only get merged PRs as reference implementations, excluding rejected/closed PRs.
 
 Filter results:
 - **Include**: SDK repos from the SDK List table
@@ -376,11 +378,13 @@ This saves 2-5 minutes by avoiding re-checks of successful SDKs.
 ## Search Command Reference
 
 ```bash
-# PR search (all states - omit --state flag)
-# IMPORTANT: Always include mergedAt to distinguish merged from rejected PRs
-gh search prs "keywords" --repo {repo} --limit 10 --json number,title,state,url,closedAt,mergedAt
-gh search prs "sentry-docs/pull/123" org:getsentry --json url,repository,number,closedAt,mergedAt
-gh search prs "in:title keywords is:merged" --repo {repo} --json number,title,url,closedAt,mergedAt
+# PR search (use search qualifiers to filter by state)
+# IMPORTANT: Use is:merged to get only merged PRs, is:open for open PRs
+# The mergedAt field is NOT available in gh search prs output
+gh search prs "keywords is:merged" --repo {repo} --limit 10 --json number,title,state,url,closedAt
+gh search prs "keywords is:open" --repo {repo} --limit 5 --json number,title,state,url
+gh search prs "sentry-docs/pull/123 is:merged" org:getsentry --json url,repository,number,closedAt
+gh search prs "in:title keywords is:merged" --repo {repo} --json number,title,url,closedAt
 
 # PR detail fetch (for pattern extraction)
 gh pr view {pr_number} --repo {repo} --json title,body,files

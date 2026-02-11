@@ -15,25 +15,29 @@ Check if a single SDK has implemented a feature.
 
 ### 1. PR Search
 
-Search all PR states (open, closed, merged) by omitting --state flag:
+Search for both merged and open PRs using separate queries:
 
 ```bash
-gh search prs --repo {repo} "{keywords}" --limit 10 --json number,title,state,url,closedAt,mergedAt
+# Search for merged PRs
+gh search prs --repo {repo} "{keywords} is:merged" --limit 10 --json number,title,state,url,closedAt
+
+# Search for open PRs
+gh search prs --repo {repo} "{keywords} is:open" --limit 5 --json number,title,state,url
 ```
 
 **CRITICAL - PR state distinction:**
-- The `state` field only returns "OPEN" or "CLOSED" (merged PRs appear as "CLOSED", not "MERGED")
-- Use `mergedAt` field to distinguish merged from rejected PRs:
-  - **OPEN**: `state == "OPEN"` - Implementation in progress
-  - **MERGED**: `state == "CLOSED" AND mergedAt != null` - Implementation complete
-  - **CLOSED** (rejected): `state == "CLOSED" AND mergedAt == null` - Abandoned/rejected, ignore
-- This is a known gh CLI limitation (cli/cli#6290)
+- The `state` field only returns "OPEN" or "CLOSED" (merged PRs appear as "CLOSED")
+- The `gh search prs` command does NOT support the `mergedAt` field
+- Use search qualifiers to distinguish PR types:
+  - **OPEN**: Use `is:open` qualifier - Implementation in progress
+  - **MERGED**: Use `is:merged` qualifier - Implementation complete
+  - **CLOSED** (rejected): Would use `is:unmerged is:closed`, but we ignore these by not searching for them
+- This approach filters at search time instead of filtering results
 
 **Result categorization:**
-After fetching PRs, categorize into three groups:
-1. Open PRs: `state == "OPEN"`
-2. Merged PRs: `state == "CLOSED" AND mergedAt != null`
-3. Closed (rejected) PRs: `state == "CLOSED" AND mergedAt == null` (ignore these)
+After fetching PRs, categorize into two groups:
+1. Open PRs: Results from `is:open` search
+2. Merged PRs: Results from `is:merged` search
 
 Store both open and merged PRs for status determination (don't prioritize yet).
 
@@ -139,13 +143,13 @@ Apply in this order:
    - confidence = null, include error message in notes
 
 2. **✅ implemented**: If ANY strong evidence found IN THE CORRECT PATH:
-   - Merged PR (state == "CLOSED" AND mergedAt != null), OR
+   - Merged PR (from `is:merged` search), OR
    - Code pattern matches, OR
    - Config option matches
    - Set confidence based on evidence strength (see Output section)
    - **This takes precedence over open PRs**: If both merged PR and open PR exist, classify as implemented (open PR is likely follow-up work)
    - When only weak evidence exists, prefer "implemented" with low confidence over "not_implemented"
-   - Note: CLOSED (rejected) PRs (mergedAt == null) don't count as evidence
+   - Note: Rejected PRs are excluded from searches (not using `is:unmerged is:closed`)
 
 3. **🔄 needs_review**: If open PR found (state == "OPEN") AND no implementation evidence
    - Implementation in progress but not merged
@@ -160,14 +164,14 @@ Apply in this order:
 
 5. **❌ not_implemented**: If no evidence found IN THE CORRECT PATH
    - No open/merged PRs, no code patterns, no config options
-   - Closed (rejected) PRs only (mergedAt == null)
+   - Note: Rejected PRs are excluded from searches (we only search `is:merged` or `is:open`)
    - confidence = null
    - Default when searches return empty results
 
 ### Example Decision Flows
 
 **Scenario A: MERGED PR + code found**
-- Merged PR (mergedAt != null) + code patterns found
+- Merged PR (from `is:merged` search) + code patterns found
 - Result: ✅ implemented (high confidence)
 
 **Scenario B: OPEN PR + no other evidence**
@@ -175,7 +179,7 @@ Apply in this order:
 - Result: 🔄 needs_review
 
 **Scenario C: MERGED PR + OPEN PR**
-- Merged PR (mergedAt != null) + open PR found
+- Merged PR (from `is:merged` search) + open PR found
 - Result: ✅ implemented (merged evidence takes precedence, open PR likely follow-up)
 - Note: This prevents false "needs_review" from unrelated open PRs
 
@@ -184,18 +188,17 @@ Apply in this order:
 - Result: ✅ implemented (code evidence takes precedence)
 - Note: Open PR might be tangential or adding more to existing implementation
 
-**Scenario E: CLOSED (rejected) PR + code found**
-- Closed PR (mergedAt == null), but code patterns found
+**Scenario E: Code found only**
+- Code patterns found, but no PRs
 - Result: ✅ implemented (medium confidence - code only)
-- Note: PR was rejected but feature was implemented differently
+- Note: Feature was implemented but PR may have been in different repo or not found by search
 
-**Scenario F: CLOSED (rejected) PR + no code**
-- Closed PR (mergedAt == null), no code/config, no other PRs
+**Scenario F: No evidence**
+- No PRs, no code/config matches
 - Result: ❌ not_implemented
-- Note: Rejected PR means abandoned attempt, feature not implemented
 
 **Scenario G: MERGED PR only (no code)**
-- Merged PR (mergedAt != null), no code patterns found
+- Merged PR (from `is:merged` search), no code patterns found
 - Result: ✅ implemented (low confidence - PR only)
 - Note: Code search may have missed patterns, or code was in different format
 
