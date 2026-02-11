@@ -21,6 +21,13 @@ Search all PR states (open, closed, merged) by omitting --state flag:
 gh search prs --repo {repo} "{keywords}" --limit 10 --json number,title,state,url,closedAt
 ```
 
+**Important - PR state handling:**
+- **OPEN**: Implementation in progress, use needs_review status
+- **MERGED**: Implementation complete, use implemented status (with code evidence)
+- **CLOSED** (not merged): Rejected/abandoned, ignore these - treat as if no PR exists
+
+When multiple PRs found, prioritize by state: OPEN > MERGED > CLOSED
+
 ### 2. Code Search
 
 Search for BOTH code patterns AND config options. Config options are often the most reliable indicators of feature implementation.
@@ -116,15 +123,18 @@ Apply in this order:
 1. **⚠️ error**: If ANY gh command failed (rate limit, auth issue, network error)
    - confidence = null, include error message in notes
 
-2. **🔄 needs_review**: If open PR found (state != "MERGED")
+2. **🔄 needs_review**: If open PR found (state == "OPEN")
+   - Implementation in progress but not merged
+   - Ignore CLOSED PRs (rejected/abandoned, not awaiting review)
    - confidence = null
 
 3. **✅ implemented**: If ANY evidence found IN THE CORRECT PATH:
-   - Merged PR (state = "MERGED"), OR
+   - Merged PR (state == "MERGED"), OR
    - Code pattern matches, OR
    - Config option matches
    - Set confidence based on evidence strength (see Output section)
    - When only weak evidence exists, prefer "implemented" with low confidence over "not_implemented"
+   - Note: CLOSED (non-merged) PRs don't count as evidence - check for code/config instead
 
 4. **🚫 not_applicable**: If feature doesn't apply to this SDK type
    - Examples: backend-only feature on mobile SDK, server-side feature on client SDK
@@ -135,6 +145,29 @@ Apply in this order:
    - No PRs (open or merged), no code patterns, no config options
    - confidence = null
    - Default when searches return empty results
+
+### Example Decision Flows
+
+**Scenario A: MERGED PR + code found**
+- Result: ✅ implemented (high confidence)
+
+**Scenario B: OPEN PR found**
+- Result: 🔄 needs_review (ignore any code/closed PRs)
+
+**Scenario C: MERGED PR + CLOSED PR + no code**
+- MERGED PR found → check code → no code found
+- Result: ✅ implemented (low confidence - PR only)
+- Note: CLOSED PR is ignored
+
+**Scenario D: CLOSED PR + code found**
+- No OPEN/MERGED PRs → check code → code found
+- Result: ✅ implemented (medium confidence - code only)
+- Note: CLOSED PR doesn't trigger needs_review
+
+**Scenario E: CLOSED PR + no code**
+- No OPEN/MERGED PRs, no code/config
+- Result: ❌ not_implemented
+- Note: CLOSED PR means abandoned attempt, feature not implemented
 
 ## Path Filtering Rules
 
