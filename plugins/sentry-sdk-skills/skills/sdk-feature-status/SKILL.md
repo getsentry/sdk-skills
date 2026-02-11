@@ -122,10 +122,10 @@ This step is critical for accuracy. Extract search patterns from a reference imp
 Search for best reference SDK PR:
 ```bash
 # By develop doc (if PR link is in the doc)
-gh search prs "sentry-docs/pull/12345" org:getsentry --json url,repository,number,mergedAt
+gh search prs "sentry-docs/pull/12345" org:getsentry --json url,repository,number,closedAt
 
 # By keywords (search merged PRs only)
-gh search prs "client reports is:merged" org:getsentry --limit 20 --json url,repository,number,title,mergedAt
+gh search prs "client reports is:merged" org:getsentry --limit 20 --json url,repository,number,title,closedAt
 ```
 
 Filter results:
@@ -133,7 +133,7 @@ Filter results:
 - **Exclude**: `getsentry/sentry`, `getsentry/sentry-docs`, `getsentry/develop`
 
 **Selection heuristic:**
-1. Sort results by `mergedAt` date (latest first)
+1. Sort results by `closedAt` date (latest first)
 2. Select first result (latest merged PR)
    - Rationale: Later PRs have refined naming, better documentation, lessons learned
 
@@ -321,9 +321,9 @@ Retry: /sdk-feature-status --retry /tmp/sdk-feature-status-1234567890.json
 
 ```bash
 # PR search (all states - omit --state flag)
-gh search prs "keywords" --repo {repo} --limit 10 --json number,title,state,url,mergedAt
-gh search prs "sentry-docs/pull/123" org:getsentry --json url,repository,number,mergedAt
-gh search prs "in:title keywords is:merged" --repo {repo} --json number,title,url,mergedAt
+gh search prs "keywords" --repo {repo} --limit 10 --json number,title,state,url,closedAt
+gh search prs "sentry-docs/pull/123" org:getsentry --json url,repository,number,closedAt
+gh search prs "in:title keywords is:merged" --repo {repo} --json number,title,url,closedAt
 
 # PR detail fetch (for pattern extraction)
 gh pr view {pr_number} --repo {repo} --json title,body,files
