@@ -193,24 +193,12 @@ Then confirm:
 
 ## Error Handling
 
-**SDK check fails:**
-- Mark status as `"error"` with error message
-- Continue checking other SDKs
-- Include in final report
-
-**Multiple failures:**
-- Report succeeds if ≥1 SDK succeeds
-- Show errors in report
-- Suggest retry
-
-**Rate limiting:**
-- Return partial results
-- Mark remaining as "error: Rate limit exceeded"
-- Suggest: wait 60 min or use authenticated gh CLI
-
-**All checks fail:**
-- Skill fails with clear error
-- Check: `gh auth status`, network, API limits
+| Failure Mode | Behavior |
+|--------------|----------|
+| Single SDK fails | Mark as `error`, continue others |
+| Multiple SDKs fail | Report partial results, suggest retry |
+| Rate limited | Return partial results, wait 60 min |
+| All SDKs fail | Skill fails, check `gh auth status` |
 
 ## Verification
 
@@ -220,13 +208,10 @@ After generating the report:
 2. **Check "not_implemented" SDKs**: Search GitHub UI manually for 1-2 to confirm no false negatives
 3. **Review "needs_review" items**: These require human judgment
 
-**Common false positives:**
-- PRs that mention the feature but don't implement it
-- Code that has similar naming but different purpose
-
-**Common false negatives:**
-- Feature implemented under different name
-- Implementation in a sub-package not searched
+| Issue Type | Common Causes |
+|------------|---------------|
+| False positives | PRs that mention but don't implement; similar naming, different purpose |
+| False negatives | Feature under different name; implementation in unsearched sub-package |
 
 ## Output Schema
 
@@ -304,11 +289,14 @@ gh search issues "feature name" --repo {repo} --json number,title,state,url
 ## Guidelines
 
 **Status determination:**
-- **Implemented:** Merged PR + code evidence IN THE CORRECT PATH
-- **Needs review:** Open PR OR code found but unclear
-- **Not implemented:** No PR, no code, no issues IN THE CORRECT PATH
-- **Not applicable:** Feature technically impossible or out of scope for SDK type
-- **Error:** gh command failed (network, auth, rate limit)
+
+| Status | Criteria |
+|--------|----------|
+| ✅ Implemented | Merged PR + code evidence IN THE CORRECT PATH |
+| ⚠️ Needs review | Open PR OR code found but unclear |
+| ❌ Not implemented | No PR, no code, no issues IN THE CORRECT PATH |
+| 🚫 Not applicable | Feature technically impossible or out of scope for SDK type |
+| ⚠️ Error | gh command failed (network, auth, rate limit) |
 
 **Path filtering (CRITICAL for accuracy):**
 - **Always use path filters** when specified in the SDK list
@@ -318,16 +306,21 @@ gh search issues "feature name" --repo {repo} --json number,title,state,url
 - Code in `sentry/` does NOT mean Android SDK has the feature
 
 **Performance:**
-- Launch subagents in parallel (2 batches of 8-9 each)
-- Use `--limit` flags to avoid excessive API calls
-- Each SDK check: 10-30 seconds
-- Total: 2-5 minutes
+
+| Metric | Value |
+|--------|-------|
+| Parallelization | 2 batches of 8-9 subagents |
+| Per SDK check | 10-30 seconds |
+| Total duration | 2-5 minutes |
 
 **Not Applicable logic:**
-- Backend-only feature → mobile SDKs might be N/A
-- Mobile-only feature → backend SDKs might be N/A
-- Profiling features → some SDKs lack profiler APIs
-- When unsure, prefer "not_implemented" over "not_applicable"
+
+| Scenario | Example |
+|----------|---------|
+| Backend-only feature | Mobile SDKs might be N/A |
+| Mobile-only feature | Backend SDKs might be N/A |
+| Missing SDK APIs | Profiling features where SDK lacks profiler APIs |
+| Default behavior | When unsure, prefer "not_implemented" over "not_applicable" |
 
 ## Limitations
 
