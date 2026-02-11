@@ -67,6 +67,7 @@ Return exactly this JSON structure:
   "repo": "{repo}",
   "path_filter": "{path_filter}" or null,
   "status": "implemented|needs_review|not_implemented|not_applicable|error",
+  "confidence": "high|medium|low" or null,
   "pr_url": "https://..." or null,
   "pr_number": 1234 or null,
   "merged_date": "2024-01-15" or null,
@@ -75,13 +76,20 @@ Return exactly this JSON structure:
 }
 ```
 
+**Confidence field** (only for status = "implemented"):
+- **high**: Merged PR found + code evidence + config option found
+- **medium**: Merged PR + code evidence (no config), OR code evidence only (no PR found)
+- **low**: Merged PR mention only (no code evidence), OR single weak signal
+- **null**: For all other statuses (needs_review, not_implemented, not_applicable, error)
+
 ## Status Determination
 
 - ✅ **implemented**: Merged PR + code evidence found IN THE CORRECT PATH
-- ⚠️ **needs_review**: Open PR or unclear implementation
-- ❌ **not_implemented**: No evidence found IN THE CORRECT PATH
-- 🚫 **not_applicable**: Feature doesn't apply to this SDK type
-- ⚠️ **error**: gh command failed (include error message)
+  - Set confidence based on evidence strength (see Output section)
+- ⚠️ **needs_review**: Open PR or unclear implementation (confidence = null)
+- ❌ **not_implemented**: No evidence found IN THE CORRECT PATH (confidence = null)
+- 🚫 **not_applicable**: Feature doesn't apply to this SDK type (confidence = null)
+- ⚠️ **error**: gh command failed (confidence = null, include error message)
 
 ## Path Filtering Rules
 

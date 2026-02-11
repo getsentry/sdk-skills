@@ -33,8 +33,8 @@ Check which Sentry SDKs have implemented a feature.
 ## Usage
 
 **Input:** Develop doc URL or free-form question
-**Output:** Streaming results as SDKs complete, then final summary
-**Time:** 2-5 minutes (results appear within 10-30 seconds)
+**Output:** Progressive results as SDKs complete, then final summary (may buffer depending on execution environment)
+**Time:** 2-5 minutes total
 
 **Examples:**
 ```bash
@@ -49,6 +49,9 @@ Check which Sentry SDKs have implemented a feature.
 
 # Free-form question
 /sdk-feature-status Which SDKs have continuous profiling?
+
+# Incremental retry (re-check only failed/missing SDKs)
+/sdk-feature-status --retry /tmp/sdk-feature-status-1234567890.json
 ```
 
 ## SDK List
@@ -90,13 +93,20 @@ All SDKs in this table will be checked:
 
 ### Step 1: Parse Input
 
+**If --retry flag with cache file:**
+1. Load cached results from file: `cat /tmp/sdk-feature-status-*.json`
+2. Extract feature name, patterns, and previous results from cache
+3. Skip to Step 3 (re-check failed/missing SDKs only)
+
 **If URL, extract feature name:**
 
-| URL Type | Example | Extraction |
-|----------|---------|------------|
-| Docs PR | `github.com/getsentry/sentry-docs/pull/12345` | Feature name from PR title |
-| Develop doc | `develop.sentry.dev/sdk/profiling/` | "profiling" from path |
-| Doc with anchor | `develop.sentry.dev/sdk/features/#session-replay` | "session-replay" from anchor |
+| URL Type | Example | Extraction Method |
+|----------|---------|-------------------|
+| Docs PR | `github.com/getsentry/sentry-docs/pull/12345` | Use `gh pr view 12345 --repo getsentry/sentry-docs --json title`, extract from title |
+| Develop doc | `develop.sentry.dev/sdk/profiling/` | Extract from URL path: last segment before trailing slash ("profiling") |
+| Doc with anchor | `develop.sentry.dev/sdk/features/#session-replay` | Use anchor fragment ("session-replay"), ignore path |
+
+**Priority:** If anchor present, use anchor. Otherwise use path. Page title fetching not required (would need `curl` + HTML parsing).
 
 **If question, extract keywords:**
 - Example: "Which SDKs have continuous profiling?" → keywords: `["continuous profiling"]`
@@ -109,7 +119,7 @@ This step is critical for accuracy. Extract search patterns from a reference imp
 
 #### 2.1 Find Reference PR
 
-Search for earliest merged SDK PR:
+Search for best reference SDK PR:
 ```bash
 # By develop doc (if PR link is in the doc)
 gh search prs "sentry-docs/pull/12345" org:getsentry --json url,repository,number,mergedAt
@@ -121,10 +131,17 @@ gh search prs "client reports is:merged" org:getsentry --limit 20 --json url,rep
 Filter results:
 - **Include**: SDK repos from the SDK List table
 - **Exclude**: `getsentry/sentry`, `getsentry/sentry-docs`, `getsentry/develop`
-- **Sort**: By `mergedAt` date (earliest first)
-- **Select**: First result as reference implementation
 
-If no results found, skip to Step 3 using only the keywords from Step 1.
+**Selection heuristic:**
+1. Sort results by `mergedAt` date (latest first)
+2. Select first result (latest merged PR)
+   - Rationale: Later PRs have refined naming, better documentation, lessons learned
+
+**Validation in Step 2.2:**
+- After fetching PR, check if `body` field is non-empty
+- If empty/null, skip pattern extraction and proceed to Step 3 with keywords only
+
+If no PRs found at all, skip to Step 3 using only the keywords from Step 1.
 
 #### 2.2 Fetch PR Details
 
@@ -135,134 +152,41 @@ gh pr view {pr_number} --repo {repo} --json title,body,files
 
 This returns:
 - `title`: PR title (e.g., "Add Client Reports to Python SDK")
-- `body`: PR description with code examples
+- `body`: PR description with code examples (may be empty/null)
 - `files`: List of changed files with paths
+
+**Validation:** If `body` is empty/null, skip Step 2.3 and proceed to Step 3 using only keywords from Step 1.
 
 #### 2.3 Extract Patterns
 
-Use the following algorithm to extract search patterns from the reference PR.
+Extract search patterns from the reference PR to find the feature across all SDKs.
 
-**A. Extract Feature Name from Title**
+**High-level process:**
+1. Extract feature name from PR title (remove prefixes like "feat:", "Add ", SDK references)
+2. Extract code patterns from PR body (class names, function names, config keys)
+3. Extract patterns from file paths (filenames without extensions)
+4. Generate language variants (CamelCase, snake_case, kebab-case)
+5. Score patterns by frequency (title: +5, body: +1, files: +3)
+6. Select top patterns: 5 code_patterns, 3 config_options, all keywords
 
-```
-Input: "feat(python): Add Client Reports support"
-Steps:
-  1. Remove prefixes: "feat:", "Add ", "Implement ", "feature:", "fix:"
-  2. Remove SDK references: "to Python SDK", "for iOS", "(python)"
-  3. Remove suffixes: " support", " feature"
-  4. Result: "Client Reports"
-```
-
-Common patterns:
-- "Add {feature}" → {feature}
-- "Implement {feature} for {SDK}" → {feature}
-- "feat({sdk}): {feature}" → {feature}
-
-**B. Extract Code Patterns from Body**
-
-Parse the PR body markdown:
-
-1. **Find code blocks**: Look for fenced code blocks (triple backticks) and inline code (single backticks)
-
-2. **Extract class/interface names**:
-   - Pattern: `[A-Z][a-zA-Z0-9]+` (CamelCase starting with capital)
-   - Examples: `ClientReportManager`, `IClientReporter`, `ClientReportRecorder`
-   - Filter out common words: `String`, `Boolean`, `Integer`, `Object`, `Array`
-
-3. **Extract function/method names**:
-   - Pattern: `[a-z][a-zA-Z0-9]+\(` (identifier followed by opening paren)
-   - Examples: `sendClientReport(`, `recordLostEvent(`, `flushReports(`
-
-4. **Extract configuration keys**:
-   - Look for JSON/YAML structures: `"key": value` or `key: value`
-   - Look for dict/object literals: `{...}`
-   - Common config patterns: `enable*`, `send*`, `*Enabled`, `*Reports`
-   - Examples: `sendClientReports`, `enableClientReports`, `client_reports_enabled`
-
-**C. Extract Patterns from File Paths**
-
-From the `files` field, examine file paths for naming clues:
-
-```bash
-# Example file paths:
-sentry/client_reports.py          → "client_reports"
-Sources/ClientReportManager.swift → "ClientReportManager"
-client-report-manager.ts          → "client-report-manager"
-```
-
-Extraction rules:
-- Take filename without extension
-- Prefer newly added files over modified files
-- Skip test files, docs, and config files
-- Extract last path component (e.g., `src/core/reports.ts` → `reports`)
-
-**D. Generate Language Variants**
-
-Given a base pattern (e.g., `ClientReport`), generate all naming convention variants:
-
-| Convention | Base | With Suffix |
-|------------|------|-------------|
-| CamelCase | `ClientReport` | `ClientReportManager`, `ClientReports` |
-| camelCase | `clientReport` | `clientReportManager`, `clientReports` |
-| snake_case | `client_report` | `client_report_manager`, `client_reports` |
-| kebab-case | `client-report` | `client-report-manager`, `client-reports` |
-
-Common suffixes: `Manager`, `Recorder`, `Handler`, `Service`, `Reporter`, `s` (plural)
-
-**E. Categorize into Pattern Groups**
-
-Organize extracted patterns into three categories:
-
+**Example output:**
 ```json
 {
-  "keywords": [
-    "client reports",
-    "client reporting",
-    "client report"
-  ],
-  "code_patterns": [
-    "ClientReport",
-    "ClientReportManager",
-    "ClientReportRecorder",
-    "client_report",
-    "client_report_manager"
-  ],
-  "config_options": [
-    "sendClientReports",
-    "send_client_reports",
-    "enableClientReports",
-    "client_reports_enabled"
-  ]
+  "keywords": ["client reports"],
+  "code_patterns": ["ClientReport", "ClientReportManager", "client_report"],
+  "config_options": ["sendClientReports", "send_client_reports"]
 }
 ```
 
-Deduplication: Remove exact duplicates, keep case variations.
+**Fallback:** If <3 total patterns found, generate variants from feature name and continue.
 
-**F. Fallback Strategy**
-
-If extraction yields fewer than 3 total patterns:
-
-1. Use feature name from Step 1 as primary keyword
-2. Generate variants:
-   - Original: "session replay"
-   - CamelCase: "SessionReplay"
-   - snake_case: "session_replay"
-   - kebab-case: "session-replay"
-3. Add to keywords list
-4. Continue to Step 3
-
-**G. Pattern Selection for Search**
-
-Use top patterns by frequency:
-- Top 5 most common code_patterns
-- Top 3 most common config_options
-- All keywords (typically 1-3)
-
-This prevents search query overload while maintaining coverage.
+**Detailed algorithm:** MUST follow the complete procedure in `reference/pattern-extraction.md` for extraction rules, regex patterns, filtering logic, and frequency counting.
 
 ### Step 3: Check All SDKs with Streaming Output
 
 Launch subagents in parallel batches while displaying results incrementally as they complete.
+
+**⚠️ Streaming Limitations**: Due to agent execution model, results may buffer and appear in batches rather than true real-time streaming. The instructions below describe the ideal output format; actual display timing depends on the execution environment.
 
 #### 3.1 Display Initial Header
 
@@ -285,63 +209,55 @@ This provides immediate feedback and context while subagents execute.
 
 #### 3.2 Launch Subagents in Batches
 
-Execute in 2-3 batches to balance parallelism vs API rate limits:
+**Batch generation algorithm:**
 
-- **Batch 1** (10 SDKs): `javascript`, `python`, `java`, `android`, `ruby`, `php`, `go`, `dotnet`, `cocoa`, `react-native`
-- **Batch 2** (10 SDKs): `rust`, `flutter`, `unity`, `electron`, `elixir`, `laravel`, `symfony`, `kotlin`, `native`, `unreal`
-- **Batch 3** (3 SDKs): `cordova`, `capacitor`, `godot`
+1. Get all SDKs from SDK List table (Section: SDK List)
+2. Calculate batch size: `batch_size = 10`
+3. Calculate number of batches: `num_batches = ceil(total_sdks / batch_size)`
+4. Split SDKs into batches:
+   - Batch 1: SDKs 1-10 from table
+   - Batch 2: SDKs 11-20 from table
+   - Batch 3: SDKs 21+ from table
+   - etc.
 
-For each SDK, launch a subagent with these inputs:
-- SDK name, repository, and path_filter (from SDK List table)
-- Search patterns from Step 2 (keywords, code_patterns, config_options)
+This automatically adjusts when SDKs are added/removed from the table.
 
-See `agents/sdk-checker.md` for complete subagent procedure and output schema.
+**For each SDK in each batch, launch a subagent:**
+
+Use Task tool with:
+- `subagent_type: "general-purpose"`
+- `description: "Check {sdk_name} SDK for {feature_name}"`
+- `prompt: "Follow the procedure in agents/sdk-checker.md with inputs: sdk_name={name}, repo={repo}, path_filter={filter}, keywords={keywords}, code_patterns={patterns}, config_options={options}"`
+
+**Execution strategy:**
+- Execute batches sequentially (Batch 1 → Batch 2 → Batch 3)
+- Within each batch, execute subagents in parallel
+- This balances parallelism (10 concurrent) vs API rate limits
+
+**Subagent output schema:** See `agents/sdk-checker.md` for complete procedure and expected JSON output.
 
 #### 3.3 Display Results as They Complete
 
-**Critical: Stream results immediately, don't wait for batch completion.**
+Stream results immediately as subagents return (don't wait for batch completion).
 
-As each subagent returns a result, display it in the appropriate category:
-
-**For status = "implemented":**
+**Display format by status:**
 ```
-✅ python  #1234  2024-01-15  getsentry/sentry-python
-```
-
-**For status = "needs_review":**
-```
-⚠️  java  #5678  (open)  getsentry/sentry-java
-```
-
-**For status = "not_implemented":**
-```
+✅ python  #1234  2024-01-15  [HIGH]  getsentry/sentry-python
+✅ java    #5678  2024-02-01  [MED]   getsentry/sentry-java
+⚠️  android  #9012  (open)  getsentry/sentry-java
 ❌ flutter  getsentry/sentry-dart
+🚫 native  getsentry/sentry-native  (reason)
+⚠️  rust  getsentry/sentry-rust  (error message)
 ```
 
-**For status = "not_applicable":**
-```
-🚫 native  getsentry/sentry-native  (Limited feature set)
-```
+**Confidence levels** (for "implemented" only):
+- **HIGH**: PR + code + config | **MED**: PR + code OR code only | **LOW**: PR only or weak signal
 
-**For status = "error":**
-```
-⚠️  rust  getsentry/sentry-rust  (Rate limited)
-```
-
-**Progress indicator**: Optionally show `[3/23]`, `[4/23]`, etc. after each result.
-
-#### 3.4 Handle Batch Transitions
-
-Between batches, optionally display:
-```
-Checking next batch...
-```
-
-This helps users understand why there might be brief pauses.
+Optionally show progress counter: `[3/23]`, `[4/23]`. Between batches, display: "Checking next batch..."
 
 ### Step 4: Display Final Summary
 
-After all subagents complete (or timeout after 5 minutes), display summary section:
+After all subagents complete (or timeout after 10 minutes), display summary section:
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -361,17 +277,36 @@ Next Steps:
 ```
 
 **Summary calculation:**
-- Count results by status
-- List SDK names for actionable items
-- Include PR numbers for "needs_review" items
-- Provide specific guidance for errors (wait time, auth check, etc.)
+- Count by status, list actionable SDKs, include PR numbers for "needs_review"
 
-**If timeout reached:**
+#### 4.1 Save Results & Incremental Retry
+
+Save results to `/tmp/sdk-feature-status-{timestamp}.json` with this schema:
+
+```json
+{
+  "feature_name": "client reports",
+  "patterns": {
+    "keywords": ["client reports"],
+    "code_patterns": ["ClientReport", "client_report"],
+    "config_options": ["sendClientReports"]
+  },
+  "results": [
+    {"name": "python", "status": "implemented", "confidence": "high", "pr_number": 1234, ...},
+    {"name": "java", "status": "error", "error": "rate limited", ...}
+  ]
+}
 ```
-⚠️  Timeout: 5 minutes reached, showing partial results.
-Missing: {sdk_list}
-Retry with: /sdk-feature-status {feature_name}
+
+Display cache path to user.
+
+**On timeout/errors, suggest retry:**
 ```
+⚠️  Timeout reached. Results cached to: /tmp/sdk-feature-status-1234567890.json
+Retry: /sdk-feature-status --retry /tmp/sdk-feature-status-1234567890.json
+```
+
+**Retry logic:** Load cache → identify failed/missing SDKs → re-check only those → merge → display updated summary. Saves 2-5 minutes.
 
 ## Error Handling
 
@@ -407,41 +342,15 @@ gh search issues "feature name" --repo {repo} --json number,title,state,url
 
 ## Guidelines
 
-**Status determination:**
+**Status determination:** ✅ Implemented (PR + code in correct path, confidence: HIGH/MED/LOW) | ⚠️ Needs review (open PR or unclear) | ❌ Not implemented (no evidence) | 🚫 Not applicable (impossible for SDK type) | ⚠️ Error (command failed)
 
-| Status | Criteria |
-|--------|----------|
-| ✅ Implemented | Merged PR + code evidence IN THE CORRECT PATH |
-| ⚠️ Needs review | Open PR OR code found but unclear |
-| ❌ Not implemented | No PR, no code, no issues IN THE CORRECT PATH |
-| 🚫 Not applicable | Feature technically impossible or out of scope for SDK type |
-| ⚠️ Error | gh command failed (network, auth, rate limit) |
+**Confidence:** HIGH (PR + code + config) | MED (PR + code OR code only) | LOW (PR only or weak signal)
 
-**Path filtering (CRITICAL for accuracy):**
-- **Always use path filters** when specified in the SDK list
-- Android and Java share `getsentry/sentry-java` but have separate codebases
-- Without path filters, searches return identical results for both SDKs
-- Code in `sentry-android/` does NOT mean Java SDK has the feature
-- Code in `sentry/` does NOT mean Android SDK has the feature
+**Path filtering:** CRITICAL for Java/Android sharing `getsentry/sentry-java`. Always use path filters from SDK table—code in `sentry-android/` ≠ Java has feature.
 
-**Performance:**
+**Performance:** ceil(sdks/10) batches × 10 parallel, 10-30s per SDK, 2-5min total
 
-| Metric | Value |
-|--------|-------|
-| Parallelization | 2-3 batches of 3-10 subagents |
-| Per SDK check | 10-30 seconds |
-| First results | 10-30 seconds (streamed immediately) |
-| Total duration | 2-5 minutes |
-| Output style | Streaming (incremental display) |
-
-**Not Applicable logic:**
-
-| Scenario | Example |
-|----------|---------|
-| Backend-only feature | Mobile SDKs might be N/A |
-| Mobile-only feature | Backend SDKs might be N/A |
-| Missing SDK APIs | Profiling features where SDK lacks profiler APIs |
-| Default behavior | When unsure, prefer "not_implemented" over "not_applicable" |
+**Not applicable:** Use for backend-only/mobile-only features or missing SDK APIs. Default: prefer "not_implemented" over "not_applicable" when unsure.
 
 ## Limitations
 
