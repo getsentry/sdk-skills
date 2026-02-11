@@ -152,11 +152,11 @@ gh pr view {pr_number} --repo {repo} --json title,body,files
 ```
 
 This returns:
-- `title`: PR title (e.g., "Add Client Reports to Python SDK")
+- `title`: PR title (e.g., "Add Client Reports to Python SDK") - always available
 - `body`: PR description with code examples (may be empty/null)
-- `files`: List of changed files with paths
+- `files`: List of changed files with paths - always available
 
-**Validation:** If `body` is empty/null, skip Step 2.3 and proceed to Step 3 using only keywords from Step 1.
+**Note:** Even if `body` is empty/null, proceed to Step 2.3 to extract patterns from `title` and `files`.
 
 #### 2.3 Extract Patterns
 
@@ -164,11 +164,17 @@ Extract search patterns from the reference PR to find the feature across all SDK
 
 **High-level process:**
 1. Extract feature name from PR title (remove prefixes like "feat:", "Add ", SDK references)
-2. Extract code patterns from PR body (class names, function names, config keys)
+2. Extract code patterns from PR body **if body is non-empty** (class names, function names, config keys)
 3. Extract patterns from file paths (filenames without extensions)
 4. Generate language variants (CamelCase, snake_case, kebab-case)
-5. Score patterns by frequency (title: +5, body: +1, files: +3)
+5. Score patterns by frequency (title: +5, body: +1 if available, files: +3)
 6. Select top patterns: 5 code_patterns, 3 config_options, all keywords
+
+**Handling empty PR body:**
+- If `body` is empty/null, skip body pattern extraction (step 2 above)
+- Still extract patterns from `title` (step 1) and `files` (step 3)
+- Continue with title-derived keywords and file-path patterns
+- This preserves valuable signals even when PR description is missing
 
 **Example output:**
 ```json
@@ -179,7 +185,9 @@ Extract search patterns from the reference PR to find the feature across all SDK
 }
 ```
 
-**Fallback:** If <3 total patterns found, generate variants from feature name and continue.
+**Fallback:** If <3 total patterns found (after extracting from title and files), generate variants from feature name and continue.
+
+**Empty body is not a failure:** Title + file patterns often provide sufficient signal (e.g., PR title "Add Client Reports" + files like "ClientReport.java" yields strong patterns).
 
 **Detailed algorithm:** MUST follow the complete procedure in `reference/pattern-extraction.md` for extraction rules, regex patterns, filtering logic, and frequency counting.
 
@@ -369,9 +377,10 @@ This saves 2-5 minutes by avoiding re-checks of successful SDKs.
 
 ```bash
 # PR search (all states - omit --state flag)
-gh search prs "keywords" --repo {repo} --limit 10 --json number,title,state,url,closedAt
-gh search prs "sentry-docs/pull/123" org:getsentry --json url,repository,number,closedAt
-gh search prs "in:title keywords is:merged" --repo {repo} --json number,title,url,closedAt
+# IMPORTANT: Always include mergedAt to distinguish merged from rejected PRs
+gh search prs "keywords" --repo {repo} --limit 10 --json number,title,state,url,closedAt,mergedAt
+gh search prs "sentry-docs/pull/123" org:getsentry --json url,repository,number,closedAt,mergedAt
+gh search prs "in:title keywords is:merged" --repo {repo} --json number,title,url,closedAt,mergedAt
 
 # PR detail fetch (for pattern extraction)
 gh pr view {pr_number} --repo {repo} --json title,body,files
