@@ -15,10 +15,10 @@ Check if a single SDK has implemented a feature.
 
 ### 1. PR Search
 
-Filter by path in PR title/body if path_filter is provided:
+Search all PR states (open, closed, merged) by omitting --state flag:
 
 ```bash
-gh search prs --repo {repo} "{keywords}" --state all --limit 10 --json number,title,state,url,mergedAt
+gh search prs --repo {repo} "{keywords}" --limit 10 --json number,title,state,url,mergedAt
 ```
 
 ### 2. Code Search

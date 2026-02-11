@@ -110,8 +110,8 @@ Search for earliest merged PR:
 # By develop doc
 gh search prs "sentry-docs/pull/12345" org:getsentry --json url,repository,number,mergedAt
 
-# By keywords
-gh search prs "client reports" org:getsentry --state merged --limit 20 --json url,repository,number,title,mergedAt
+# By keywords (search merged PRs only)
+gh search prs "client reports is:merged" org:getsentry --limit 20 --json url,repository,number,title,mergedAt
 ```
 
 Filter to SDK repos only (exclude `sentry`, `sentry-docs`, `develop`).
@@ -205,10 +205,10 @@ After generating the report:
 ## Search Command Reference
 
 ```bash
-# PR search
-gh search prs "keywords" --repo {repo} --state all --limit 10 --json number,title,state,url,mergedAt
+# PR search (all states - omit --state flag)
+gh search prs "keywords" --repo {repo} --limit 10 --json number,title,state,url,mergedAt
 gh search prs "sentry-docs/pull/123" org:getsentry --json url,repository,number,mergedAt
-gh search prs "in:title keywords" --repo {repo} --state merged
+gh search prs "in:title keywords is:merged" --repo {repo} --json number,title,url,mergedAt
 
 # Code search (without path filter)
 gh search code "class ClassName" --repo {repo} --json path,repository
