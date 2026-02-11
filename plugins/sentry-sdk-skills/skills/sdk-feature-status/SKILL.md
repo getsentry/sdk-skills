@@ -33,8 +33,8 @@ Check which Sentry SDKs have implemented a feature.
 ## Usage
 
 **Input:** Develop doc URL or free-form question
-**Output:** Formatted table with status summary
-**Time:** 2-5 minutes
+**Output:** Streaming results as SDKs complete, then final summary
+**Time:** 2-5 minutes (results appear within 10-30 seconds)
 
 **Examples:**
 ```bash
@@ -441,9 +441,11 @@ gh search issues "feature name" --repo {repo} --json number,title,state,url
 
 | Metric | Value |
 |--------|-------|
-| Parallelization | 2 batches of 8-9 subagents |
+| Parallelization | 2-3 batches of 3-10 subagents |
 | Per SDK check | 10-30 seconds |
+| First results | 10-30 seconds (streamed immediately) |
 | Total duration | 2-5 minutes |
+| Output style | Streaming (incremental display) |
 
 **Not Applicable logic:**
 
