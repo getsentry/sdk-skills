@@ -2,7 +2,6 @@
 name: sdk-feature-status
 description: Use this skill when the user asks about SDK feature implementation status, SDK parity, or cross-SDK coverage. Triggers include: develop doc URLs (github.com/getsentry/sentry-docs/...), questions like 'which SDKs have X?', 'is X implemented in Python SDK?', 'SDK parity for feature Y', or requests to check feature rollout status. Do NOT use for: SDK usage questions (how to use a feature), bug reports, SDK configuration help, or questions about a single SDK's behavior.
 allowed-tools: Bash Task
-compatibility: Requires gh CLI with authentication (gh auth status)
 ---
 
 # SDK Feature Status Checker
@@ -340,3 +339,12 @@ gh search issues "feature name" --repo {repo} --json number,title,state,url
 - Cannot access private repos or uncommitted work
 - Results are point-in-time snapshots
 - Manual validation recommended for edge cases
+
+## Dependencies
+
+**Required:**
+- GitHub CLI (`gh`) must be installed and authenticated
+- Verify with: `gh auth status`
+
+**Authentication:**
+The skill requires GitHub API access to search PRs, code, and issues across Sentry SDK repositories. Authenticated access provides 5,000 requests/hour vs 60/hour unauthenticated.
