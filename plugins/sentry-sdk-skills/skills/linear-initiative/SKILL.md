@@ -1,7 +1,7 @@
 ---
 name: linear-initiative
 description: Creates Linear projects for SDK repositories based on a Linear initiative. Use when rolling out a feature across multiple SDKs, creating SDK projects from initiative, or setting up cross-SDK alignment work.
-allowed-tools: Read mcp__linear-server__query_data mcp__linear-server__list_teams mcp__linear-server__list_projects mcp__linear-server__create_project mcp__linear-server__get_project mcp__linear-server__update_project mcp__linear-server__create_issue AskUserQuestion
+allowed-tools: Read mcp__linear-server__query_data mcp__linear-server__list_teams mcp__linear-server__list_projects mcp__linear-server__create_project mcp__linear-server__get_project mcp__linear-server__update_project mcp__linear-server__create_issue mcp__linear-server__update_issue AskUserQuestion
 compatibility: Requires the Linear MCP server to be configured
 ---
 
@@ -114,7 +114,7 @@ Example: Initiative "SDK Handling HTTP 413 (Content Too Large)" → "SDK Handlin
       - **team**: The team name
       - **project**: Link to the created project
       - **description**: Include a link to the SDK repo (`https://github.com/getsentry/<repo-name>`) and a summary of the initiative requirements
-    - Note: If issues were already created in step 9, skip this step — instead, update the existing issue descriptions using `mcp__linear-server__query_data` to append the repo link.
+    - Note: If issues were already created in step 9, skip this step — instead, update the existing issue descriptions using `mcp__linear-server__update_issue` to append the repo link.
 
 ## Example Usage
 
