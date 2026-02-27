@@ -1,8 +1,8 @@
 ---
 name: sdk-feature-rollout
 description: Roll out an SDK feature across multiple Sentry SDK repositories. Use when implementing a spec across SDKs, creating GitHub issues for SDK repos, or spawning parallel implementation agents. Triggers on "rollout", "implement across SDKs", "SDK feature rollout", "cross-SDK implementation".
-allowed-tools: WebFetch Task AskUserQuestion mcp__github__search_issues mcp__github__search_pull_requests mcp__github__issue_write mcp__github__issue_read mcp__github__pull_request_read mcp__github__list_issues mcp__github__list_pull_requests mcp__github__create_pull_request mcp__github__add_issue_comment mcp__linear-server__query_data mcp__linear-server__get_project mcp__linear-server__update_project
-compatibility: Requires the GitHub MCP server (github/github-mcp-server) with issues and pull_requests toolsets enabled. Optionally requires the Linear MCP server for initiative tracking.
+allowed-tools: Read Grep Glob WebFetch Task AskUserQuestion mcp__github__search_issues mcp__github__search_pull_requests mcp__github__issue_write mcp__github__issue_read mcp__github__pull_request_read mcp__github__list_issues mcp__github__list_pull_requests mcp__github__create_pull_request mcp__github__add_issue_comment mcp__github__get_file_contents mcp__github__create_branch mcp__github__push_files mcp__github__create_or_update_file mcp__linear-server__query_data mcp__linear-server__get_project mcp__linear-server__update_project
+compatibility: Requires the GitHub MCP server (github/github-mcp-server) with issues, pull_requests, and repos toolsets enabled. Optionally requires the Linear MCP server for initiative tracking.
 ---
 
 # SDK Feature Rollout
@@ -41,6 +41,18 @@ All repos are under the `getsentry` GitHub org. Only repos with Enabled=Yes are 
 | sentry-unity | Unity | Gaming | Yes |
 | sentry-unreal | Unreal | Gaming | Yes |
 
+## Repo Access
+
+All operations go through the GitHub MCP server — no shell access (`Bash`) is used. Only operate on repos listed in the SDK Repos table above under the `getsentry` org.
+
+Available GitHub MCP tools:
+- **Read**: `mcp__github__get_file_contents` — read files and list directories from repos
+- **Search**: `mcp__github__search_issues`, `mcp__github__search_pull_requests` — find existing issues/PRs
+- **Issues**: `mcp__github__issue_write`, `mcp__github__issue_read`, `mcp__github__list_issues`, `mcp__github__add_issue_comment`
+- **PRs**: `mcp__github__pull_request_read`, `mcp__github__list_pull_requests`, `mcp__github__create_pull_request`
+- **Branches & Commits**: `mcp__github__create_branch`, `mcp__github__push_files`, `mcp__github__create_or_update_file`
+- **Linear** (optional): `mcp__linear-server__query_data` (read-only), `mcp__linear-server__get_project`, `mcp__linear-server__update_project` (write)
+
 ## Instructions
 
 ### Step 1: Gather Context
@@ -77,12 +89,13 @@ Record which SDK teams already have Linear projects for this initiative.
 
 ### Step 4: Check Existing GitHub Issues and PRs
 
-For each enabled SDK repo, search GitHub for existing issues and PRs related to the feature:
+For each enabled SDK repo, search GitHub for existing issues and PRs related to the feature using the GitHub MCP server:
 
 - Use `mcp__github__search_issues` with query `<feature-keyword> repo:getsentry/<repo-name>` to find existing issues
 - Use `mcp__github__search_pull_requests` with query `<feature-keyword> repo:getsentry/<repo-name>` to find existing PRs
+- Use `mcp__github__pull_request_read` to check the state of any existing PRs (open, draft, merged, conflicting)
 
-Use a short, distinctive keyword from the feature name as the search term.
+Use a short, distinctive keyword from the feature name as the search term. Search with multiple variants (e.g., both "strict trace continuation" and "strictTraceContinuation") to avoid missing results.
 
 ### Step 5: Present Status Matrix
 
@@ -119,55 +132,86 @@ For SDKs that don't have a GitHub issue yet:
 
 ### Step 7: Spawn Implementation Agents
 
-For each selected SDK, spawn a `Task` agent with `isolation: "worktree"` to implement the feature:
+For each selected SDK, spawn a `Task` agent to implement the feature. All operations go through the GitHub MCP server — no local cloning or shell access.
+
+**Do NOT use `isolation: "worktree"`** — not needed since agents work entirely via the GitHub API.
 
 **Agent prompt template:**
 
 ```
 You are implementing a feature in the Sentry SDK repository: getsentry/<repo-name>.
 
+## Tool Restrictions
+
+Do NOT use `Bash` or any shell commands. All operations must go through the GitHub MCP server and file tools:
+- `mcp__github__get_file_contents` — read files and list directories from the repo
+- `mcp__github__pull_request_read` — read reference PR diffs and details
+- `mcp__github__create_branch` — create a feature branch
+- `mcp__github__push_files` — push all file changes in a single commit
+- `mcp__github__create_or_update_file` — create or update individual files
+- `mcp__github__create_pull_request` — create the draft PR
+
 ## Feature Spec
 <paste spec summary>
 
 ## Reference Implementations
-<paste reference PR URLs — the agent should use the GitHub MCP server to read PR diffs>
+<paste reference PR URLs>
 
 ## Steps
 
-1. Clone the repo:
-   - Clone getsentry/<repo-name> into the worktree's working directory
-
-2. Create a feature branch: git checkout -b <feature-branch-name>
-
-3. Read the reference implementations to understand the approach:
-   - Use the GitHub MCP server pull_request_read to read each reference PR diff
+1. Read the reference implementations to understand the approach:
+   - Use `mcp__github__pull_request_read` to read each reference PR diff
    - Note the patterns, file locations, and test structure
 
-4. Read the repo's CONTRIBUTING.md or CLAUDE.md for conventions.
+2. Explore the repo's structure and conventions:
+   - Use `mcp__github__get_file_contents` to list the repo's top-level directory
+   - Read CONTRIBUTING.md or CLAUDE.md for conventions
+   - Explore the source tree and test directories to understand patterns
 
-5. Implement the feature following the repo's conventions:
+3. Create a feature branch:
+   - Use `mcp__github__create_branch` on `getsentry/<repo-name>` with branch name `feat/<feature-name>`
+
+4. Implement the feature:
+   - Read existing source files with `mcp__github__get_file_contents` to understand the codebase
+   - Prepare all file changes (new files and modifications)
+   - Use `mcp__github__push_files` to push all changes in a single commit
    - Match the style of existing code
    - Add tests following the repo's test patterns
    - Update any relevant documentation
 
-6. Create a draft PR:
-   - Use the repo's PR template if one exists (check .github/PULL_REQUEST_TEMPLATE.md)
-   - Reference the GitHub issue: "Closes getsentry/<repo-name>#<issue-number>"
-   - Use the GitHub MCP server create_pull_request with draft=true
+5. Create a draft PR:
+   - Read the repo's PR template if one exists (check `.github/PULL_REQUEST_TEMPLATE.md`)
+   - Use `mcp__github__create_pull_request` with `draft: true`
+   - Reference the GitHub issue in the body: "Closes getsentry/<repo-name>#<issue-number>"
 
-7. Report back with:
+6. Report back with:
    - PR URL
-   - CI status (passing/failing)
-   - Any issues or notes for the user
+   - Summary of changes made (files modified/created)
+   - Any notes for review
 ```
 
 Spawn agents **in parallel** using multiple `Task` tool calls. Use `model: "opus"` for each agent.
 
 **Important**: Ask the user before spawning agents. Show them how many agents will be spawned and for which SDKs.
 
-### Step 8: Collect Results and Link Everything
+### Step 8: Wait for CI
 
-After all agents complete:
+After agents create draft PRs, check CI status for each PR using `mcp__github__pull_request_read` to see check statuses. Since there is no local test running, CI is the only verification.
+
+If CI fails:
+1. Use `mcp__github__pull_request_read` to identify failing checks
+2. Spawn a `Task` agent (or resume the original) to investigate and fix. Common failure causes:
+   - Existing tests that assert on baggage/header content and need updating for new fields
+   - Linting or formatting issues
+   - Missing imports or type errors
+3. The agent reads the failing files with `mcp__github__get_file_contents`, then pushes fixes with `mcp__github__push_files`
+4. Re-check CI status after the fix
+
+Run CI-monitoring agents in the background so multiple PRs can be checked in parallel.
+
+### Step 9: Collect Results and Link Everything
+
+After all agents complete and CI passes:
 
 1. **Present a results table**:
    ```
@@ -179,16 +223,22 @@ After all agents complete:
 
 2. **Link GH issues to Linear** (if Linear initiative was provided):
    - For each SDK that has both a Linear project and a GH issue, use `mcp__linear-server__update_project` to add the GH issue link to the project description
+   - Note: `mcp__linear-server__query_data` is **read-only** — always use `mcp__linear-server__update_project` for write operations
 
 3. **Summary**: Provide a final summary of what was done and what needs manual follow-up.
 
 ## Notes
 
 - Always confirm with the user before creating issues or PRs — never auto-create without approval
-- The GitHub MCP server must be configured and authenticated
+- **No shell access** — neither the skill nor spawned agents use `Bash`. All GitHub operations go through the MCP server. Do not use `git` or `gh` CLI commands
+- The GitHub MCP server must be configured and authenticated with the `repos`, `issues`, and `pull_requests` toolsets enabled
+- Only operate on repos listed in the SDK Repos table — do not access other repositories
 - For large rollouts (10+ SDKs), consider batching in groups of 5 to avoid rate limits
 - If a reference implementation is not available, the agent should still attempt implementation based on the spec alone, but flag it for extra review
-- Each implementation agent runs in an isolated worktree to avoid conflicts
+- Do NOT use `isolation: "worktree"` — not needed since agents work entirely via the GitHub API
+- Since there is no local test running, CI is the sole verification — always wait for CI to pass before presenting final results
+- Use `mcp__github__push_files` to push all file changes in a single commit rather than `create_or_update_file` per file (which creates one commit per file)
+- `mcp__linear-server__query_data` is **read-only** — always use `mcp__linear-server__update_project` for write operations
 
 ## Example Usage
 
@@ -203,4 +253,5 @@ Response flow:
 6. Draft and confirm issue template
 7. Create GH issues for each
 8. Spawn implementation agents in parallel
-9. Collect results, present summary table
+9. Wait for CI to pass on all draft PRs, fix any failures
+10. Collect results, present summary table
