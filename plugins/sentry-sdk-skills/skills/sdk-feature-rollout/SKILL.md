@@ -1,8 +1,8 @@
 ---
 name: sdk-feature-rollout
 description: Roll out an SDK feature across multiple Sentry SDK repositories. Use when implementing a spec across SDKs, creating GitHub issues for SDK repos, or spawning parallel implementation agents. Triggers on "rollout", "implement across SDKs", "SDK feature rollout", "cross-SDK implementation".
-allowed-tools: Bash Read Grep Glob WebFetch Task AskUserQuestion
-compatibility: Requires `gh` CLI authenticated with GitHub. Optionally requires the Linear MCP server for initiative tracking.
+allowed-tools: WebFetch Task AskUserQuestion mcp__github__search_issues mcp__github__search_pull_requests mcp__github__issue_write mcp__github__issue_read mcp__github__pull_request_read mcp__github__list_issues mcp__github__list_pull_requests mcp__github__create_pull_request mcp__github__add_issue_comment mcp__linear-server__query_data mcp__linear-server__get_project mcp__linear-server__update_project
+compatibility: Requires the GitHub MCP server (github/github-mcp-server) with issues and pull_requests toolsets enabled. Optionally requires the Linear MCP server for initiative tracking.
 ---
 
 # SDK Feature Rollout
@@ -77,15 +77,10 @@ Record which SDK teams already have Linear projects for this initiative.
 
 ### Step 4: Check Existing GitHub Issues and PRs
 
-For each enabled SDK repo, search GitHub for existing issues and PRs related to the feature. Use `Bash` to run:
+For each enabled SDK repo, search GitHub for existing issues and PRs related to the feature:
 
-```bash
-# Search for issues
-gh search issues "<feature-name>" --repo getsentry/<repo-name> --limit 5
-
-# Search for PRs
-gh search prs "<feature-name>" --repo getsentry/<repo-name> --limit 5
-```
+- Use `mcp__github__search_issues` with query `<feature-keyword> repo:getsentry/<repo-name>` to find existing issues
+- Use `mcp__github__search_pull_requests` with query `<feature-keyword> repo:getsentry/<repo-name>` to find existing PRs
 
 Use a short, distinctive keyword from the feature name as the search term.
 
@@ -118,10 +113,7 @@ For SDKs that don't have a GitHub issue yet:
 
 2. **Show the template to the user** and ask for confirmation or edits.
 
-3. **Create issues** using `Bash`:
-   ```bash
-   gh issue create --repo getsentry/<repo-name> --title "<title>" --body "<body>"
-   ```
+3. **Create issues** using `mcp__github__issue_write` for each repo (`getsentry/<repo-name>`).
 
 4. Record the created issue URLs.
 
@@ -138,19 +130,19 @@ You are implementing a feature in the Sentry SDK repository: getsentry/<repo-nam
 <paste spec summary>
 
 ## Reference Implementations
-<paste reference PR URLs — the agent should use `gh pr diff <url>` to read them>
+<paste reference PR URLs — the agent should use the GitHub MCP server to read PR diffs>
 
 ## Steps
 
 1. Clone the repo if not already present:
    - Check if ~/Projects/<repo-name> exists
-   - If not: `gh repo clone getsentry/<repo-name> ~/Projects/<repo-name>`
+   - If not: clone getsentry/<repo-name> to ~/Projects/<repo-name>
    - cd ~/Projects/<repo-name>
 
-2. Create a feature branch: `git checkout -b <feature-branch-name>`
+2. Create a feature branch: git checkout -b <feature-branch-name>
 
 3. Read the reference implementations to understand the approach:
-   - Use `gh pr diff <pr-url>` for each reference PR
+   - Use the GitHub MCP server pull_request_read to read each reference PR diff
    - Note the patterns, file locations, and test structure
 
 4. Read the repo's CONTRIBUTING.md or CLAUDE.md for conventions.
@@ -163,13 +155,9 @@ You are implementing a feature in the Sentry SDK repository: getsentry/<repo-nam
 6. Create a draft PR:
    - Use the repo's PR template if one exists (check .github/PULL_REQUEST_TEMPLATE.md)
    - Reference the GitHub issue: "Closes getsentry/<repo-name>#<issue-number>"
-   - `gh pr create --draft --title "<title>" --body "<body>"`
+   - Use the GitHub MCP server create_pull_request with draft=true
 
-7. Check CI status:
-   - `gh pr checks <pr-number> --repo getsentry/<repo-name> --watch`
-   - If CI fails, attempt to fix and push again (up to 2 retries)
-
-8. Report back with:
+7. Report back with:
    - PR URL
    - CI status (passing/failing)
    - Any issues or notes for the user
@@ -192,14 +180,14 @@ After all agents complete:
    ```
 
 2. **Link GH issues to Linear** (if Linear initiative was provided):
-   - For each SDK that has both a Linear project and a GH issue, update the Linear project description to include the GH issue link
+   - For each SDK that has both a Linear project and a GH issue, use `mcp__linear-server__update_project` to add the GH issue link to the project description
 
 3. **Summary**: Provide a final summary of what was done and what needs manual follow-up.
 
 ## Notes
 
 - Always confirm with the user before creating issues or PRs — never auto-create without approval
-- The `gh` CLI must be authenticated (`gh auth status` to verify)
+- The GitHub MCP server must be configured and authenticated
 - For large rollouts (10+ SDKs), consider batching in groups of 5 to avoid rate limits
 - If a reference implementation is not available, the agent should still attempt implementation based on the spec alone, but flag it for extra review
 - Each implementation agent runs in an isolated worktree to avoid conflicts
