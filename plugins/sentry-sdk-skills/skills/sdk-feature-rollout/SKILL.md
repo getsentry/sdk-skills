@@ -2,7 +2,7 @@
 name: sdk-feature-rollout
 description: Roll out an SDK feature across multiple Sentry SDK repositories. Use when implementing a spec across SDKs, creating GitHub issues for SDK repos, or spawning parallel implementation agents. Triggers on "rollout", "implement across SDKs", "SDK feature rollout", "cross-SDK implementation".
 allowed-tools: Read Grep Glob Bash WebFetch Task AskUserQuestion mcp__github__search_issues mcp__github__search_pull_requests mcp__github__issue_write mcp__github__issue_read mcp__github__pull_request_read mcp__github__list_issues mcp__github__list_pull_requests mcp__github__create_pull_request mcp__github__add_issue_comment mcp__github__get_file_contents mcp__github__create_branch mcp__github__push_files mcp__linear-server__query_data mcp__linear-server__get_project mcp__linear-server__update_project
-compatibility: Requires the GitHub MCP server (github/github-mcp-server) with issues, pull_requests, and repos toolsets enabled. Requires `gh` CLI installed and authenticated for CI log access. Optionally requires the Linear MCP server for initiative tracking.
+compatibility: "Requires the GitHub MCP server (github/github-mcp-server) with issues, pull_requests, and repos toolsets enabled. Requires gh CLI installed and authenticated for CI log access. Recommended: the Linear MCP server (github.com/linear/linear-mcp) for fetching specs, reference implementations, and initiative tracking."
 ---
 
 # SDK Feature Rollout
@@ -82,21 +82,35 @@ go vet / gofmt                  # Go
 
 ## Instructions
 
-### Step 1: Gather Context
+### Step 1: Check Linear MCP and Gather Context
 
-Ask the user for the following (collect all before proceeding):
+The primary source for feature specs, reference implementations, and SDK team tracking is **Linear**. Start by checking if the Linear MCP server is available.
 
-**Required:**
-- **Spec URL** — the specification or RFC describing the feature
+**If Linear MCP is available:**
 
-**Optional:**
-- **Linear initiative ID or URL** — to check which SDK teams are already tracked
-- **Reference implementation PRs** — URLs to existing PRs in Python, JS, Go, or other SDKs that already implement the feature
-- **Target SDKs** — if the user already knows which SDKs to target (skip the selection in Step 5)
+1. Ask the user for the **Linear initiative ID or URL** for the feature to roll out.
+2. Fetch the initiative details using `mcp__linear-server__query_data`:
+   ```
+   Query: "Get initiative [identifier] with its name, description, targetDate, and associated projects including their team names"
+   ```
+3. From the initiative, extract:
+   - **Spec URL** — look for links to specs/RFCs in the initiative description
+   - **Reference implementation PRs** — look for links to existing PRs in the initiative description or project descriptions
+   - **Existing SDK projects** — record which SDK teams already have Linear projects for this initiative
+4. If the spec URL or reference PRs are not found in the initiative, ask the user to provide them.
+
+**If Linear MCP is not available:**
+
+Inform the user that Linear is the recommended way to track SDK rollouts and ask how they'd like to proceed:
+- **Set up Linear MCP** — the [Linear MCP server](https://github.com/linear/linear-mcp) needs to be configured. Point the user to the setup instructions and pause until it's ready.
+- **Continue without Linear** — ask the user to provide manually:
+  - **Spec URL** (required) — the specification or RFC describing the feature
+  - **Reference implementation PRs** (optional) — URLs to existing PRs in Python, JS, Go, or other SDKs
+  - **Target SDKs** (optional) — if the user already knows which SDKs to target (skip the selection in Step 5)
 
 ### Step 2: Fetch and Summarize the Spec
 
-Use `WebFetch` to read the spec URL. Present a concise summary to the user:
+Use `WebFetch` to read the spec URL (whether found in the Linear initiative or provided by the user). Present a concise summary to the user:
 - Feature name
 - Key requirements (bulleted list)
 - Any SDK-specific considerations mentioned in the spec
@@ -104,17 +118,7 @@ Use `WebFetch` to read the spec URL. Present a concise summary to the user:
 
 Ask the user to confirm the summary is accurate before proceeding.
 
-### Step 3: Check Linear Initiative (if provided)
-
-If a Linear initiative ID was provided, use the Linear MCP server to query existing projects:
-
-```
-Query: "Get initiative [identifier] with its name, description, and associated projects including their team names"
-```
-
-Record which SDK teams already have Linear projects for this initiative.
-
-### Step 4: Check Existing GitHub Issues and PRs
+### Step 3: Check Existing GitHub Issues and PRs
 
 For each enabled SDK repo, search GitHub for existing issues and PRs related to the feature using the GitHub MCP server:
 
@@ -124,7 +128,7 @@ For each enabled SDK repo, search GitHub for existing issues and PRs related to 
 
 Use a short, distinctive keyword from the feature name as the search term. Search with multiple variants (e.g., both "strict trace continuation" and "strictTraceContinuation") to avoid missing results.
 
-### Step 5: Present Status Matrix
+### Step 4: Present Status Matrix
 
 Show the user a table summarizing the current state:
 
@@ -142,7 +146,7 @@ Ask the user which SDKs to proceed with. Offer options:
 - By category (Backend, Mobile, JavaScript, Gaming)
 - Individual selection
 
-### Step 6: Create GitHub Issues
+### Step 5: Create GitHub Issues
 
 For SDKs that don't have a GitHub issue yet:
 
@@ -157,7 +161,7 @@ For SDKs that don't have a GitHub issue yet:
 
 4. Record the created issue URLs.
 
-### Step 7: Spawn Implementation Agents
+### Step 6: Spawn Implementation Agents
 
 For each selected SDK, spawn a `Task` agent to implement the feature. Agents use the GitHub MCP server for remote operations and scoped `Bash` for local testing.
 
@@ -235,9 +239,9 @@ Spawn agents **in parallel** using multiple `Task` tool calls. Use `model: "opus
 
 **Important**: Ask the user before spawning agents. Show them how many agents will be spawned and for which SDKs.
 
-### Step 8: Verify with CI
+### Step 7: Verify with CI
 
-Local tests should have already passed in Step 7. CI serves as final verification in the full repo environment.
+Local tests should have already passed in Step 6. CI serves as final verification in the full repo environment.
 
 After agents create draft PRs, check CI status using `mcp__github__pull_request_read`.
 
@@ -267,7 +271,7 @@ If CI fails:
 
 Run CI-monitoring agents in the background so multiple PRs can be checked in parallel.
 
-### Step 9: Collect Results and Link Everything
+### Step 8: Collect Results and Link Everything
 
 After all agents complete and CI passes:
 
@@ -279,7 +283,7 @@ After all agents complete and CI passes:
    | sentry-go | #124 | #457 | Failing | Test timeout, needs manual fix |
    ```
 
-2. **Link GH issues to Linear** (if Linear initiative was provided):
+2. **Link GH issues to Linear** (if Linear MCP is available):
    - For each SDK that has both a Linear project and a GH issue, use `mcp__linear-server__update_project` to add the GH issue link to the project description
    - Note: `mcp__linear-server__query_data` is **read-only** — always use `mcp__linear-server__update_project` for write operations
 
@@ -304,13 +308,12 @@ After all agents complete and CI passes:
 User: "Roll out strict trace continuation to all Backend SDKs"
 
 Response flow:
-1. Ask for spec URL and any reference PRs
+1. Check Linear MCP — fetch the initiative, extract spec URL and reference PRs
 2. Fetch spec, summarize requirements
 3. Check GitHub for existing issues/PRs across Backend SDKs
 4. Show status matrix — Python already has a merged PR, Rust has nothing, etc.
 5. User selects Rust, Go, Java, Ruby, PHP, .NET, Elixir
-6. Draft and confirm issue template
-7. Create GH issues for each
-8. Spawn implementation agents in parallel
-9. Wait for CI to pass on all draft PRs, fix any failures
-10. Collect results, present summary table
+6. Draft and confirm issue template, create GH issues
+7. Spawn implementation agents in parallel
+8. Wait for CI to pass on all draft PRs, fix any failures
+9. Collect results, present summary table
