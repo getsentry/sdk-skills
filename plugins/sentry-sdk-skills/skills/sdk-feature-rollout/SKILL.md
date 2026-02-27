@@ -1,8 +1,8 @@
 ---
 name: sdk-feature-rollout
 description: Roll out an SDK feature across multiple Sentry SDK repositories. Use when implementing a spec across SDKs, creating GitHub issues for SDK repos, or spawning parallel implementation agents. Triggers on "rollout", "implement across SDKs", "SDK feature rollout", "cross-SDK implementation".
-allowed-tools: Read Grep Glob WebFetch Task AskUserQuestion mcp__github__search_issues mcp__github__search_pull_requests mcp__github__issue_write mcp__github__issue_read mcp__github__pull_request_read mcp__github__list_issues mcp__github__list_pull_requests mcp__github__create_pull_request mcp__github__add_issue_comment mcp__github__get_file_contents mcp__github__create_branch mcp__github__push_files mcp__github__create_or_update_file mcp__linear-server__query_data mcp__linear-server__get_project mcp__linear-server__update_project
-compatibility: Requires the GitHub MCP server (github/github-mcp-server) with issues, pull_requests, and repos toolsets enabled. Optionally requires the Linear MCP server for initiative tracking.
+allowed-tools: Read Grep Glob Bash WebFetch Task AskUserQuestion mcp__github__search_issues mcp__github__search_pull_requests mcp__github__issue_write mcp__github__issue_read mcp__github__pull_request_read mcp__github__list_issues mcp__github__list_pull_requests mcp__github__create_pull_request mcp__github__add_issue_comment mcp__github__get_file_contents mcp__github__create_branch mcp__github__push_files mcp__linear-server__query_data mcp__linear-server__get_project mcp__linear-server__update_project
+compatibility: Requires the GitHub MCP server (github/github-mcp-server) with issues, pull_requests, and repos toolsets enabled. Requires `gh` CLI installed and authenticated for CI log access. Optionally requires the Linear MCP server for initiative tracking.
 ---
 
 # SDK Feature Rollout
@@ -43,15 +43,70 @@ All repos are under the `getsentry` GitHub org. Only repos with Enabled=Yes are 
 
 ## Repo Access
 
-All operations go through the GitHub MCP server — no shell access (`Bash`) is used. Only operate on repos listed in the SDK Repos table above under the `getsentry` org.
+Only operate on repos listed in the SDK Repos table above under the `getsentry` org.
 
-Available GitHub MCP tools:
+### GitHub MCP Tools (Primary)
+
+Use the GitHub MCP server for **all** GitHub operations — reading files, searching, issues, PRs, branches, and pushing code:
 - **Read**: `mcp__github__get_file_contents` — read files and list directories from repos
 - **Search**: `mcp__github__search_issues`, `mcp__github__search_pull_requests` — find existing issues/PRs
 - **Issues**: `mcp__github__issue_write`, `mcp__github__issue_read`, `mcp__github__list_issues`, `mcp__github__add_issue_comment`
 - **PRs**: `mcp__github__pull_request_read`, `mcp__github__list_pull_requests`, `mcp__github__create_pull_request`
-- **Branches & Commits**: `mcp__github__create_branch`, `mcp__github__push_files`, `mcp__github__create_or_update_file`
+- **Branches & Commits**: `mcp__github__create_branch`, `mcp__github__push_files`
 - **Linear** (optional): `mcp__linear-server__query_data` (read-only), `mcp__linear-server__get_project`, `mcp__linear-server__update_project` (write)
+
+### Shell Access (Scoped)
+
+`Bash` is allowed **only** for CI log access and local testing. Do not use `gh` or `git` for operations that the GitHub MCP server can handle.
+
+**CI log access** — use `gh` CLI only for reading CI output (not available via MCP):
+```bash
+# List recent workflow runs for a branch
+gh run list --repo getsentry/<repo-name> --branch <branch> --limit 5
+
+# View logs for failed steps only
+gh run view <run-id> --repo getsentry/<repo-name> --log-failed
+
+# Fetch check run annotations (specific failure lines)
+gh api repos/getsentry/<repo-name>/check-runs/<check-run-id>/annotations
+```
+
+**Local testing** — clone and run tests before pushing:
+```bash
+# Clone the repo (shallow, specific branch)
+git clone --depth 1 --branch <branch> https://github.com/getsentry/<repo-name>.git
+
+# Language-specific test runners
+pytest                          # Python
+cargo test                      # Rust
+go test ./...                   # Go
+npm test                        # JavaScript
+bundle exec rspec               # Ruby
+dotnet test                     # .NET
+mix test                        # Elixir
+php vendor/bin/phpunit          # PHP
+gradle test                     # Java/Android
+flutter test                    # Dart/Flutter
+```
+
+**Linters and formatters:**
+```bash
+cargo clippy                    # Rust
+cargo fmt --check               # Rust
+ruff check / ruff format        # Python
+npm run lint / npm run format   # JavaScript
+dotnet format                   # .NET
+mix format --check-formatted    # Elixir
+php-cs-fixer fix --dry-run      # PHP
+rubocop                         # Ruby
+go vet / gofmt                  # Go
+```
+
+**Not allowed via Bash:**
+- GitHub operations (issues, PRs, search, pushing code) — use MCP instead
+- Arbitrary shell commands unrelated to testing, linting, or CI logs
+- Network access beyond `git clone` and `gh run`/`gh api`
+- Installing system-level packages
 
 ## Instructions
 
@@ -132,24 +187,30 @@ For SDKs that don't have a GitHub issue yet:
 
 ### Step 7: Spawn Implementation Agents
 
-For each selected SDK, spawn a `Task` agent to implement the feature. All operations go through the GitHub MCP server — no local cloning or shell access.
+For each selected SDK, spawn a `Task` agent to implement the feature. Agents use the GitHub MCP server for remote operations and scoped `Bash` for local testing.
 
-**Do NOT use `isolation: "worktree"`** — not needed since agents work entirely via the GitHub API.
+Use `isolation: "worktree"` so each agent gets an isolated working directory for cloning and testing.
 
 **Agent prompt template:**
 
 ```
 You are implementing a feature in the Sentry SDK repository: getsentry/<repo-name>.
 
-## Tool Restrictions
+## Available Tools
 
-Do NOT use `Bash` or any shell commands. All operations must go through the GitHub MCP server and file tools:
+**GitHub MCP** — for all GitHub operations (reading, searching, issues, PRs, branches, pushing code):
 - `mcp__github__get_file_contents` — read files and list directories from the repo
 - `mcp__github__pull_request_read` — read reference PR diffs and details
 - `mcp__github__create_branch` — create a feature branch
 - `mcp__github__push_files` — push all file changes in a single commit
-- `mcp__github__create_or_update_file` — create or update individual files
 - `mcp__github__create_pull_request` — create the draft PR
+
+**Bash** — only for local testing, linting, and CI log access:
+- `git clone --depth 1` to clone the repo locally for testing
+- Language-specific test runners (pytest, cargo test, go test, npm test, bundle exec rspec, dotnet test, mix test, php vendor/bin/phpunit, gradle test, flutter test)
+- Linters and formatters (cargo clippy, ruff, eslint, dotnet format, rubocop, go vet, etc.)
+- `gh run view` / `gh api` for reading CI logs (only when CI fails)
+- Do NOT use Bash for GitHub operations (issues, PRs, pushing) — use MCP instead
 
 ## Feature Spec
 <paste spec summary>
@@ -179,33 +240,58 @@ Do NOT use `Bash` or any shell commands. All operations must go through the GitH
    - Add tests following the repo's test patterns
    - Update any relevant documentation
 
-5. Create a draft PR:
+5. Run tests locally:
+   - Clone the repo: `git clone --depth 1 --branch feat/<feature-name> https://github.com/getsentry/<repo-name>.git`
+   - Install dependencies if needed (follow the repo's setup instructions)
+   - Run the test suite using the appropriate runner for this SDK
+   - If tests fail, fix the issues, push fixes with `mcp__github__push_files`, and re-run
+   - Repeat until tests pass locally
+
+6. Create a draft PR:
    - Read the repo's PR template if one exists (check `.github/PULL_REQUEST_TEMPLATE.md`)
    - Use `mcp__github__create_pull_request` with `draft: true`
    - Reference the GitHub issue in the body: "Closes getsentry/<repo-name>#<issue-number>"
 
-6. Report back with:
+7. Report back with:
    - PR URL
    - Summary of changes made (files modified/created)
+   - Local test results (pass/fail summary)
    - Any notes for review
 ```
 
-Spawn agents **in parallel** using multiple `Task` tool calls. Use `model: "opus"` for each agent.
+Spawn agents **in parallel** using multiple `Task` tool calls. Use `model: "opus"` and `isolation: "worktree"` for each agent.
 
 **Important**: Ask the user before spawning agents. Show them how many agents will be spawned and for which SDKs.
 
-### Step 8: Wait for CI
+### Step 8: Verify with CI
 
-After agents create draft PRs, check CI status for each PR using `mcp__github__pull_request_read` to see check statuses. Since there is no local test running, CI is the only verification.
+Local tests should have already passed in Step 7. CI serves as final verification in the full repo environment.
+
+After agents create draft PRs, check CI status using `mcp__github__pull_request_read`.
 
 If CI fails:
-1. Use `mcp__github__pull_request_read` to identify failing checks
-2. Spawn a `Task` agent (or resume the original) to investigate and fix. Common failure causes:
+
+1. **Fetch the actual failure logs** — don't guess:
+   ```bash
+   # Find the failed run
+   gh run list --repo getsentry/<repo-name> --branch feat/<feature-name> --limit 5
+
+   # Get the failure output
+   gh run view <run-id> --repo getsentry/<repo-name> --log-failed
+   ```
+
+2. **Spawn a fix agent** (or resume the original) with the CI error output included in the prompt. Common failure causes:
    - Existing tests that assert on baggage/header content and need updating for new fields
-   - Linting or formatting issues
-   - Missing imports or type errors
-3. The agent reads the failing files with `mcp__github__get_file_contents`, then pushes fixes with `mcp__github__push_files`
-4. Re-check CI status after the fix
+   - Linting or formatting issues not caught locally
+   - Integration tests or CI-only test suites
+   - Missing imports or type errors in untested code paths
+
+3. The fix agent:
+   - Reads the failing files with `mcp__github__get_file_contents`
+   - Optionally clones the branch locally to reproduce and verify the fix
+   - Pushes fixes with `mcp__github__push_files`
+
+4. Re-check CI status after the fix. Use `gh run view` to monitor the new run.
 
 Run CI-monitoring agents in the background so multiple PRs can be checked in parallel.
 
@@ -230,14 +316,15 @@ After all agents complete and CI passes:
 ## Notes
 
 - Always confirm with the user before creating issues or PRs — never auto-create without approval
-- **No shell access** — neither the skill nor spawned agents use `Bash`. All GitHub operations go through the MCP server. Do not use `git` or `gh` CLI commands
+- **Use GitHub MCP for all GitHub operations** (issues, PRs, search, branches, pushing code). `Bash` is only for local testing, linting, and CI log access (`gh run view` / `gh api`)
 - The GitHub MCP server must be configured and authenticated with the `repos`, `issues`, and `pull_requests` toolsets enabled
+- The `gh` CLI must be installed and authenticated for CI log access only
 - Only operate on repos listed in the SDK Repos table — do not access other repositories
 - For large rollouts (10+ SDKs), consider batching in groups of 5 to avoid rate limits
 - If a reference implementation is not available, the agent should still attempt implementation based on the spec alone, but flag it for extra review
-- Do NOT use `isolation: "worktree"` — not needed since agents work entirely via the GitHub API
-- Since there is no local test running, CI is the sole verification — always wait for CI to pass before presenting final results
-- Use `mcp__github__push_files` to push all file changes in a single commit rather than `create_or_update_file` per file (which creates one commit per file)
+- Implementation agents use `isolation: "worktree"` to get an isolated working directory for cloning and local testing
+- Run tests locally before creating PRs. CI serves as final verification — always wait for CI to pass before presenting final results
+- Use `mcp__github__push_files` to push all file changes in a single commit
 - `mcp__linear-server__query_data` is **read-only** — always use `mcp__linear-server__update_project` for write operations
 
 ## Example Usage
