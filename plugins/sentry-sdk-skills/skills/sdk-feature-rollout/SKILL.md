@@ -134,10 +134,8 @@ You are implementing a feature in the Sentry SDK repository: getsentry/<repo-nam
 
 ## Steps
 
-1. Clone the repo if not already present:
-   - Check if ~/Projects/<repo-name> exists
-   - If not: clone getsentry/<repo-name> to ~/Projects/<repo-name>
-   - cd ~/Projects/<repo-name>
+1. Clone the repo:
+   - Clone getsentry/<repo-name> into the worktree's working directory
 
 2. Create a feature branch: git checkout -b <feature-branch-name>
 
