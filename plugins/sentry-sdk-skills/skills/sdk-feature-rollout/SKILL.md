@@ -11,39 +11,11 @@ Automates rolling out a feature from spec to implementation across multiple Sent
 
 ## SDK Repos
 
-All repos are under the `getsentry` GitHub org. Only repos with Enabled=Yes are included by default.
-
-| Repo | Suffix | Category | Enabled |
-|------|--------|----------|---------|
-| sentry-android | Android | Mobile | Yes |
-| sentry-capacitor | Capacitor | JavaScript, Mobile | Yes |
-| sentry-cocoa | Apple | Mobile | Yes |
-| sentry-cordova | Cordova | Mobile | Yes |
-| sentry-dart | Dart/Flutter | Mobile | Yes |
-| sentry-dotnet | .NET | Backend | Yes |
-| sentry-electron | Electron | JavaScript | Yes |
-| sentry-elixir | Elixir | Backend | Yes |
-| sentry-go | Go | Backend | Yes |
-| sentry-godot | Godot | Gaming | Yes |
-| sentry-java | Java | Backend | Yes |
-| sentry-javascript | JavaScript | JavaScript | Yes |
-| sentry-kotlin-multiplatform | KMP | Mobile | Yes |
-| sentry-laravel | Laravel | Backend | Yes |
-| sentry-lynx | Lynx | Mobile | No |
-| sentry-native | Native | Gaming | Yes |
-| sentry-php | PHP | Backend | Yes |
-| sentry-powershell | PowerShell | Backend | No |
-| sentry-python | Python | Backend | Yes |
-| sentry-react-native | React Native | JavaScript, Mobile | Yes |
-| sentry-ruby | Ruby | Backend | Yes |
-| sentry-rust | Rust | Backend | Yes |
-| sentry-symfony | Symfony | Backend | Yes |
-| sentry-unity | Unity | Gaming | Yes |
-| sentry-unreal | Unreal | Gaming | Yes |
+See [SDK_REPOS.md](../../SDK_REPOS.md) for the full list of SDK repos, suffixes, categories, and enabled status. Only repos with Enabled=Yes are included by default. All repos are under the `getsentry` GitHub org.
 
 ## Repo Access
 
-Only operate on repos listed in the SDK Repos table above under the `getsentry` org.
+Only operate on repos listed in [SDK_REPOS.md](../../SDK_REPOS.md) under the `getsentry` org.
 
 ### GitHub MCP Tools (Primary)
 
@@ -319,7 +291,7 @@ After all agents complete and CI passes:
 - **Use GitHub MCP for all GitHub operations** (issues, PRs, search, branches, pushing code). `Bash` is only for local testing, linting, and CI log access (`gh run view` / `gh api`)
 - The GitHub MCP server must be configured and authenticated with the `repos`, `issues`, and `pull_requests` toolsets enabled
 - The `gh` CLI must be installed and authenticated for CI log access only
-- Only operate on repos listed in the SDK Repos table — do not access other repositories
+- Only operate on repos listed in [SDK_REPOS.md](../../SDK_REPOS.md) — do not access other repositories
 - For large rollouts (10+ SDKs), consider batching in groups of 5 to avoid rate limits
 - If a reference implementation is not available, the agent should still attempt implementation based on the spec alone, but flag it for extra review
 - Implementation agents use `isolation: "worktree"` to get an isolated working directory for cloning and local testing
