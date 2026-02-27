@@ -106,6 +106,16 @@ Example: Initiative "SDK Handling HTTP 413 (Content Too Large)" → "SDK Handlin
      - **project**: Link to the created project
      - **description**: Based on user's choice above
 
+10. **(Optional) Ask about creating GitHub-linked issues** in each Linear project:
+    - After creating projects (and optionally issues in step 9), ask: "Do you also want to create issues that reference the GitHub SDK repositories?"
+    - **Require explicit confirmation** before proceeding
+    - If confirmed, create one issue per project using `mcp__linear-server__create_issue`:
+      - **title**: Same as project name (e.g., "SDK Handling HTTP 413 [Python]")
+      - **team**: The team name
+      - **project**: Link to the created project
+      - **description**: Include a link to the SDK repo (`https://github.com/getsentry/<repo-name>`) and a summary of the initiative requirements
+    - Note: If issues were already created in step 9, skip this step — instead, update the existing issue descriptions using `mcp__linear-server__query_data` to append the repo link.
+
 ## Example Usage
 
 User: "Create projects for the Session Replay initiative across all Mobile SDKs"

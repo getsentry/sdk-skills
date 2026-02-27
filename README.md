@@ -43,6 +43,7 @@ Copy the `skills/` directory to your agent's skills location, or reference the S
 |-------|-------------|
 | `daily-update` | Generate a formatted async daily standup message for the Sentry SDK team channel. Use when creating a "daily update", "async daily", or "standup update". |
 | `linear-initiative` | Creates Linear projects for SDK teams from an initiative. Use when rolling out features across multiple SDKs. |
+| `sdk-feature-rollout` | Roll out an SDK feature across multiple Sentry SDK repos — from spec to GitHub issues to draft PRs with parallel implementation agents. |
 
 
 ## Repository Structure
