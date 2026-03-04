@@ -1,7 +1,7 @@
 ---
 name: linear-initiative
 description: Creates Linear projects for SDK repositories based on a Linear initiative. Use when rolling out a feature across multiple SDKs, creating SDK projects from initiative, or setting up cross-SDK alignment work.
-allowed-tools: Read mcp__linear-server__query_data mcp__linear-server__list_teams mcp__linear-server__list_projects mcp__linear-server__create_project mcp__linear-server__get_project mcp__linear-server__update_project mcp__linear-server__create_issue mcp__linear-server__update_issue AskUserQuestion
+allowed-tools: Read mcp__linear-server__query_data mcp__linear-server__list_teams mcp__linear-server__list_projects mcp__linear-server__create_project mcp__linear-server__get_project mcp__linear-server__update_project mcp__linear-server__create_issue AskUserQuestion
 compatibility: Requires the Linear MCP server to be configured
 ---
 
@@ -15,7 +15,35 @@ This skill requires the [Linear MCP server](https://github.com/linear/linear-mcp
 
 ## SDK Teams
 
-See [SDK_REPOS.md](../../SDK_REPOS.md) for the full list of SDK repos/teams, suffixes, categories, and enabled status. Only teams with Enabled=Yes are included when creating projects.
+Only teams with Enabled=Yes are included when creating projects.
+
+| Team | Suffix | Category | Enabled |
+|------|--------|----------|---------|
+| sentry-android | Android | Mobile | Yes |
+| sentry-capacitor | Capacitor | JavaScript, Mobile | Yes |
+| sentry-cocoa | Apple | Mobile | Yes |
+| sentry-cordova | Cordova | Mobile | Yes |
+| sentry-dart | Dart/Flutter | Mobile | Yes |
+| sentry-dotnet | .NET | Backend | Yes |
+| sentry-electron | Electron | JavaScript | Yes |
+| sentry-elixir | Elixir | Backend | Yes |
+| sentry-go | Go | Backend | Yes |
+| sentry-godot | Godot | Gaming | Yes |
+| sentry-java | Java | Backend | Yes |
+| sentry-javascript | JavaScript | JavaScript | Yes |
+| sentry-kotlin-multiplatform | KMP | Mobile | Yes |
+| sentry-laravel | Laravel | Backend | Yes |
+| sentry-lynx | Lynx | Mobile | No |
+| sentry-native | Native | Gaming | Yes |
+| sentry-php | PHP | Backend | Yes |
+| sentry-powershell | PowerShell | Backend | No |
+| sentry-python | Python | Backend | Yes |
+| sentry-react-native | React Native | JavaScript, Mobile | Yes |
+| sentry-ruby | Ruby | Backend | Yes |
+| sentry-rust | Rust | Backend | Yes |
+| sentry-symfony | Symfony | Backend | Yes |
+| sentry-unity | Unity | Gaming | Yes |
+| sentry-unreal | Unreal | Gaming | Yes |
 
 ## Project Naming
 
@@ -70,24 +98,13 @@ Example: Initiative "SDK Handling HTTP 413 (Content Too Large)" → "SDK Handlin
    - Warn the user: "Issues may be automatically synced to GitHub. Do you want to create an issue in each project?"
    - **Require explicit confirmation** before proceeding
    - If confirmed, ask for issue content preference:
-     - **Full description**: Use the complete initiative description as the issue body
-     - **Placeholder**: "Have a look at the [initiative](<initiative-url>) for a full description."
+      - **Full description**: Use the complete initiative description as the issue body
+      - **Placeholder**: "Have a look at the [initiative](<initiative-url>) for a full description."
    - Create one issue per project using `mcp__linear-server__create_issue`:
-     - **title**: Same as project name (e.g., "SDK Handling HTTP 413 [Python]")
-     - **team**: The team name
-     - **project**: Link to the created project
-     - **description**: Based on user's choice above
-
-10. **(Optional) Ask about adding GitHub repo links** to each project's issue:
-    - Ask: "Do you also want to link the GitHub SDK repositories in the issues?"
-    - **Require explicit confirmation** before proceeding
-    - If confirmed:
-      - **If issues were created in step 9**: Update each existing issue using `mcp__linear-server__update_issue` to append the repo link (`https://github.com/getsentry/<repo-name>`) to the description
-      - **If step 9 was skipped**: Create one issue per project using `mcp__linear-server__create_issue` with:
-        - **title**: Same as project name (e.g., "SDK Handling HTTP 413 [Python]")
-        - **team**: The team name
-        - **project**: Link to the created project
-        - **description**: Link to the SDK repo and a summary of the initiative requirements
+      - **title**: Same as project name (e.g., "SDK Handling HTTP 413 [Python]")
+      - **team**: The team name
+      - **project**: Link to the created project
+      - **description**: Based on user's choice above
 
 ## Example Usage
 
