@@ -26,10 +26,11 @@ You are implementing a feature in the Sentry SDK repository: getsentry/<repo-nam
 ## Steps
 
 1. **Set up the repo locally**:
-   - Clone the repo: `gh repo clone getsentry/<repo-name> -- --depth 1`
+   - Clone the repo: `gh repo clone getsentry/<repo-name> -- --depth 50`
    - `cd <repo-name>`
-   - Create a worktree for isolation: `git worktree add ../worktrees/<repo-name>-<feature-name> -b feat/<feature-name>`
-   - `cd ../worktrees/<repo-name>-<feature-name>`
+   - **New implementation**: Create a worktree for isolation: `git worktree add ../worktrees/<repo-name>-<feature-name> -b feat/<feature-name>`
+   - **Fixing an existing PR**: Check out the PR branch instead: `gh pr checkout <pr-number>`
+   - `cd` into the working directory
 
 2. **Read the reference implementations** to understand the approach:
    - Use `gh pr diff <pr-number> --repo getsentry/<ref-repo>` to read each reference PR diff
