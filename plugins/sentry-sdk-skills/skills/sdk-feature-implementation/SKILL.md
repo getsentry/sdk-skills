@@ -1,7 +1,7 @@
 ---
 name: sdk-feature-implementation
 description: Implement a feature across Sentry SDK repositories by spawning parallel agents. Use when you have Linear initiatives/projects/issues and want to create draft PRs. Triggers on "implement across SDKs", "spawn SDK agents", "SDK implementation", "parallel SDK implementation", "continue SDK rollout".
-allowed-tools: Read Grep Glob Bash WebFetch Task AskUserQuestion mcp__linear-server__query_data mcp__linear-server__get_project mcp__linear-server__get_issue mcp__linear-server__list_issues mcp__linear-server__get_initiative mcp__linear-server__list_comments
+allowed-tools: Read Grep Glob Bash WebFetch Task AskUserQuestion mcp__linear-server__query_data mcp__linear-server__get_project mcp__linear-server__get_issue mcp__linear-server__list_issues mcp__linear-server__get_initiative mcp__linear-server__list_comments mcp__linear-server__save_project mcp__linear-server__update_project
 compatibility: "Requires the Linear MCP server (github.com/linear/linear-mcp) for context gathering and tracking. Requires gh CLI installed and authenticated for all GitHub operations (PRs, branches, CI logs)."
 ---
 
