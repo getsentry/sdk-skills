@@ -8,19 +8,14 @@ You are implementing a feature in the Sentry SDK repository: getsentry/<repo-nam
 
 ## Available Tools
 
-**GitHub MCP** — for all GitHub operations (reading, searching, issues, PRs, branches, pushing code):
-- `mcp__github__get_file_contents` — read files and list directories from the repo
-- `mcp__github__pull_request_read` — read reference PR diffs and details
-- `mcp__github__create_branch` — create a feature branch
-- `mcp__github__push_files` — push all file changes in a single commit
-- `mcp__github__create_pull_request` — create the draft PR
-
-**Bash** — only for local testing, linting, and CI log access:
-- `git clone --depth 1` to clone the repo locally for testing
+**Bash** — for all operations:
+- `gh` CLI for all GitHub operations (PRs, branches, issues, file reading)
+- `git` for local repo operations (clone, checkout, commit, push)
 - Language-specific test runners (pytest, cargo test, go test, npm test, bundle exec rspec, dotnet test, mix test, php vendor/bin/phpunit, gradle test, flutter test)
 - Linters and formatters (cargo clippy, ruff, eslint, dotnet format, rubocop, go vet, etc.)
-- `gh run view` / `gh api` for reading CI logs (only when CI fails)
-- Do NOT use Bash for GitHub operations (issues, PRs, pushing) — use MCP instead
+- `gh run view` / `gh run list` for reading CI logs
+
+**Read, Grep, Glob** — for reading and searching local files after cloning.
 
 ## Feature Spec
 <spec-summary>
@@ -30,39 +25,43 @@ You are implementing a feature in the Sentry SDK repository: getsentry/<repo-nam
 
 ## Steps
 
-1. Read the reference implementations to understand the approach:
-   - Use `mcp__github__pull_request_read` to read each reference PR diff
+1. **Set up the repo locally**:
+   - Clone the repo: `gh repo clone getsentry/<repo-name> -- --depth 1`
+   - `cd <repo-name>`
+   - Create a worktree for isolation: `git worktree add ../worktrees/<repo-name>-<feature-name> -b feat/<feature-name>`
+   - `cd ../worktrees/<repo-name>-<feature-name>`
+
+2. **Read the reference implementations** to understand the approach:
+   - Use `gh pr diff <pr-number> --repo getsentry/<ref-repo>` to read each reference PR diff
    - Note the patterns, file locations, and test structure
 
-2. Explore the repo's structure and conventions:
-   - Use `mcp__github__get_file_contents` to list the repo's top-level directory
+3. **Explore the repo's structure and conventions**:
    - Read CONTRIBUTING.md or CLAUDE.md for conventions
    - Explore the source tree and test directories to understand patterns
 
-3. Create a feature branch:
-   - Use `mcp__github__create_branch` on `getsentry/<repo-name>` with branch name `feat/<feature-name>`
-
-4. Implement the feature:
-   - Read existing source files with `mcp__github__get_file_contents` to understand the codebase
-   - Prepare all file changes (new files and modifications)
-   - Use `mcp__github__push_files` to push all changes in a single commit
-   - Match the style of existing code
+4. **Implement the feature**:
+   - Read existing source files to understand the codebase
+   - Make changes locally, matching the style of existing code
    - Add tests following the repo's test patterns
    - Update any relevant documentation
 
-5. Run tests locally:
-   - Clone the repo: `git clone --depth 1 --branch feat/<feature-name> https://github.com/getsentry/<repo-name>.git`
+5. **Run tests locally**:
    - Install dependencies if needed (follow the repo's setup instructions)
    - Run the test suite using the appropriate runner for this SDK
-   - If tests fail, fix the issues, push fixes with `mcp__github__push_files`, and re-run
+   - If tests fail, fix the issues and re-run
    - Repeat until tests pass locally
 
-6. Create a draft PR:
+6. **Commit and push**:
+   - `git add` the changed files
+   - `git commit` with a descriptive message
+   - `git push -u origin feat/<feature-name>`
+
+7. **Create a draft PR**:
    - Read the repo's PR template if one exists (check `.github/PULL_REQUEST_TEMPLATE.md`)
-   - Use `mcp__github__create_pull_request` with `draft: true`
+   - Use `gh pr create --draft --repo getsentry/<repo-name> --title "feat: <feature-name>" --body "..."`
    - Reference the GitHub issue in the body: "Closes getsentry/<repo-name>#<issue-number>"
 
-7. Report back with:
+8. **Report back** with:
    - PR URL
    - Summary of changes made (files modified/created)
    - Local test results (pass/fail summary)

@@ -1,46 +1,48 @@
 ---
 name: sdk-feature-implementation
-description: Implement a feature across Sentry SDK repositories by spawning parallel agents. Use when you have GitHub issues or Linear projects/issues and want to create draft PRs. Triggers on "implement across SDKs", "spawn SDK agents", "SDK implementation", "parallel SDK implementation", "continue SDK rollout".
-allowed-tools: Read Grep Glob Bash WebFetch Task AskUserQuestion mcp__github__search_issues mcp__github__search_pull_requests mcp__github__issue_read mcp__github__list_issues mcp__github__list_pull_requests mcp__github__pull_request_read mcp__github__create_pull_request mcp__github__add_issue_comment mcp__github__get_file_contents mcp__github__create_branch mcp__github__push_files mcp__linear-server__query_data mcp__linear-server__get_project mcp__linear-server__list_issues mcp__linear-server__save_project
-compatibility: "Requires the GitHub MCP server (github/github-mcp-server) with issues, pull_requests, and repos toolsets enabled. Requires gh CLI installed and authenticated for CI log access. Recommended: the Linear MCP server (github.com/linear/linear-mcp) for tracking."
+description: Implement a feature across Sentry SDK repositories by spawning parallel agents. Use when you have Linear initiatives/projects/issues and want to create draft PRs. Triggers on "implement across SDKs", "spawn SDK agents", "SDK implementation", "parallel SDK implementation", "continue SDK rollout".
+allowed-tools: Read Grep Glob Bash WebFetch Task AskUserQuestion mcp__linear-server__query_data mcp__linear-server__get_project mcp__linear-server__get_issue mcp__linear-server__list_issues mcp__linear-server__get_initiative mcp__linear-server__list_comments
+compatibility: "Requires the Linear MCP server (github.com/linear/linear-mcp) for context gathering and tracking. Requires gh CLI installed and authenticated for all GitHub operations (PRs, branches, CI logs)."
 ---
 
 # SDK Feature Implementation
 
 Implement a feature across Sentry SDK repositories by spawning parallel agents that create draft PRs.
 
-## SDK Repos
-
-See [SDK_REPOS.md](../../SDK_REPOS.md) for the full list of SDK repos, suffixes, categories, and enabled status. Only repos with Enabled=Yes are included by default. All repos are under the `getsentry` GitHub org.
-
 ## Repo Access
 
-Only operate on repos listed in [SDK_REPOS.md](../../SDK_REPOS.md) under the `getsentry` org.
+Only operate on repos listed in [SDK_REPOS.md](../../SDK_REPOS.md). Only repos with Enabled=Yes are included by default. All repos are under the `getsentry` GitHub org.
 
-When performing GitHub or shell operations, read `${CLAUDE_SKILL_ROOT}/references/tools.md` for the full tools reference (GitHub MCP tools, shell access scope, allowed/disallowed commands).
+Use `gh` CLI for all GitHub operations (PRs, branches, CI logs). Use Linear MCP for all context gathering and tracking.
 
 ## Instructions
 
 ### Step 1: Gather Context
 
-The user needs to provide enough context to know **what** to implement and **where**. Accept any of these starting points:
+**Linear MCP is the primary source for all context gathering.** The user needs to provide enough context to know **what** to implement and **where**. Accept any of these starting points:
 
-- **GitHub issue URLs** (ideal) — knows exactly what to implement and where
-- **Linear initiative** — fetch with `mcp__linear-server__query_data` to extract the spec URL, reference PRs, and which SDK teams have projects/issues
+- **Linear initiative** (ideal) — fetch with `mcp__linear-server__get_initiative` to get the overview, then drill into projects/issues per SDK team
 - **Linear project or issue** — extract spec, reference PRs, and target repo from the description
 - **Spec URL + target repos** — user provides directly
 - **Single repo + description** — implement in just one SDK
 
 From the provided context, extract:
-- **Spec URL** — look for links to specs/RFCs in Linear descriptions or ask the user
-- **Reference implementation PRs** — look for links to existing PRs that serve as a reference
-- **Target repos** — determine which SDK repos to implement in, with optional GitHub issue numbers
+- **Spec URL** — look for links to specs/RFCs in Linear issue/project descriptions
+- **Reference implementation PRs** — look for PR links in Linear issue attachments or descriptions
+- **Target repos** — determine which SDK repos to implement in
+- **GitHub issue numbers** — found in Linear issue attachments (GitHub links are auto-attached)
 
-If starting from a Linear initiative, use `mcp__linear-server__query_data` to get the initiative details, then `mcp__linear-server__list_issues` or `mcp__linear-server__get_project` to find individual SDK team issues/projects. Cross-reference with GitHub to find matching issues using `mcp__github__search_issues`.
+**Context gathering flow:**
+1. `mcp__linear-server__get_initiative` — get initiative overview and linked projects
+2. `mcp__linear-server__get_project` — get project details for target SDK teams
+3. `mcp__linear-server__get_issue` — get detailed requirements, spec links, and GitHub issue attachments from each issue
+4. `mcp__linear-server__list_comments` — check for additional context or decisions in issue comments
+
+Linear issues have GitHub issue/PR links as **attachments** — use these to find the corresponding GitHub issue numbers without needing to search GitHub directly.
 
 ### Step 2: Fetch and Summarize Spec
 
-Use `WebFetch` to read the spec URL. Present a concise summary:
+If a spec URL was found, use `WebFetch` to read it. Otherwise, gather requirements from Linear issue descriptions and `gh issue view <number> --repo getsentry/<repo-name>` for GitHub issue details. Present a concise summary:
 - Feature name
 - Key requirements (bulleted list)
 - SDK-specific considerations
@@ -52,8 +54,9 @@ Ask the user to confirm the summary is accurate before proceeding. Skip if the u
 
 For each target repo, check for existing PRs:
 
-- Use `mcp__github__search_pull_requests` with query `<feature-keyword> repo:getsentry/<repo-name>`
-- Use `mcp__github__pull_request_read` to check status of any existing PRs
+- **First check Linear** — issue attachments contain links to GitHub PRs that were auto-linked
+- **Then check GitHub** for PR status using `gh pr list --repo getsentry/<repo-name> --search "<feature-keyword>" --json number,title,state,isDraft,url`
+- For PR details: `gh pr view <number> --repo getsentry/<repo-name> --json state,isDraft,mergeable,statusCheckRollup`
 
 Present a matrix:
 
@@ -72,13 +75,13 @@ This handles "continue from where you left off" naturally. Ask the user to confi
 1. Read `${CLAUDE_SKILL_ROOT}/references/agent-prompt.md` for the implementation agent prompt template.
 2. Fill in `<repo-name>`, `<spec-summary>`, `<reference-prs>`, `<feature-name>`, and `<issue-number>` for each SDK.
 3. **Ask the user before spawning agents.** Show them how many agents will be spawned and for which SDKs.
-4. Spawn agents **in parallel** using multiple `Task` tool calls with `model: "opus"` and `isolation: "worktree"` so each agent gets an isolated working directory.
+4. Spawn agents **in parallel** using multiple `Task` tool calls with `model: "opus"`. Each agent clones the repo and creates a git worktree internally for isolation.
 
 ### Step 5: Verify with CI
 
 Local tests should have already passed during implementation. Use CI as final verification.
 
-After agents create draft PRs, check CI status with `mcp__github__pull_request_read`.
+After agents create draft PRs, check CI status with `gh pr view <number> --repo getsentry/<repo-name> --json statusCheckRollup`.
 
 If CI fails:
 
@@ -91,9 +94,9 @@ If CI fails:
 2. **Spawn a fix agent** with the CI error output included in the prompt.
 
 3. The fix agent should:
-   - Read the failing files with `mcp__github__get_file_contents`
-   - Optionally clone the branch locally to reproduce and verify the fix
-   - Push fixes with `mcp__github__push_files`
+   - Read the failing files locally in the worktree
+   - Reproduce and verify the fix locally
+   - Push fixes with `git push`
 
 4. Re-check CI status after the fix.
 
@@ -120,13 +123,12 @@ Once all agents complete and CI passes:
 ## Notes
 
 - Always confirm with the user before spawning agents — never auto-create without approval
-- **Use GitHub MCP for all GitHub operations** (issues, PRs, search, branches, pushing code). `Bash` is only for local testing, linting, and CI log access (`gh run view` / `gh api`)
+- **Use Linear MCP for all context gathering** (specs, requirements, issue details, project status). Use `gh` CLI for all GitHub operations (PRs, branches, CI logs, pushing code)
 - Only operate on repos listed in [SDK_REPOS.md](../../SDK_REPOS.md)
 - For large rollouts (10+ SDKs), consider batching in groups of 5 to avoid rate limits
 - If a reference implementation is not available, the agent should still attempt implementation based on the spec alone, but flag it for extra review
-- Implementation agents use `isolation: "worktree"` for isolated working directories
+- Implementation agents clone the repo and use `git worktree` for isolated working directories
 - Run tests locally before creating PRs. CI serves as final verification
-- Use `mcp__github__push_files` to push all file changes in a single commit
 - Use the **`linear-sdk-rollout`** skill first if Linear projects/issues don't exist yet
 
 ## Example Usage
@@ -134,7 +136,7 @@ Once all agents complete and CI passes:
 User: "Implement strict trace continuation across Rust, Go, and Java SDKs"
 
 Response flow:
-1. Gather context — ask for GitHub issue URLs, or find them via Linear initiative
+1. Gather context — get initiative, projects, and issues from Linear MCP
 2. Fetch spec, confirm summary with user
 3. Check existing PRs — Rust has nothing, Go has a failing draft, Java has nothing
 4. Confirm plan: spawn 2 new agents (Rust, Java) + 1 fix agent (Go)
