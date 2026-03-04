@@ -98,13 +98,13 @@ Example: Initiative "SDK Handling HTTP 413 (Content Too Large)" → "SDK Handlin
    - Warn the user: "Issues may be automatically synced to GitHub. Do you want to create an issue in each project?"
    - **Require explicit confirmation** before proceeding
    - If confirmed, ask for issue content preference:
-      - **Full description**: Use the complete initiative description as the issue body
-      - **Placeholder**: "Have a look at the [initiative](<initiative-url>) for a full description."
+     - **Full description**: Use the complete initiative description as the issue body
+     - **Placeholder**: "Have a look at the [initiative](<initiative-url>) for a full description."
    - Create one issue per project using `mcp__linear-server__create_issue`:
-      - **title**: Same as project name (e.g., "SDK Handling HTTP 413 [Python]")
-      - **team**: The team name
-      - **project**: Link to the created project
-      - **description**: Based on user's choice above
+     - **title**: Same as project name (e.g., "SDK Handling HTTP 413 [Python]")
+     - **team**: The team name
+     - **project**: Link to the created project
+     - **description**: Based on user's choice above
 
 ## Example Usage
 
