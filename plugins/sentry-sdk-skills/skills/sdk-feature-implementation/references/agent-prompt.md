@@ -17,6 +17,15 @@ You are implementing a feature in the Sentry SDK repository: getsentry/<repo-nam
 
 **Read, Grep, Glob** — for reading and searching local files after cloning.
 
+## Working Directory
+
+After cloning and setting up the worktree, always use the `cwd` parameter on Bash tool calls instead of `cd <dir> && <command>`. This ensures tool permissions work correctly and avoids compound command permission prompts.
+
+Good: `Bash(command="git status", cwd="/path/to/worktree")`
+Bad: `Bash(command="cd /path/to/worktree && git status")`
+
+Store the worktree path in a variable early and use `cwd` for every subsequent Bash call.
+
 ## Feature Spec
 <spec-summary>
 
@@ -27,10 +36,9 @@ You are implementing a feature in the Sentry SDK repository: getsentry/<repo-nam
 
 1. **Set up the repo locally**:
    - Clone the repo: `gh repo clone getsentry/<repo-name> -- --depth 50`
-   - `cd <repo-name>`
-   - **New implementation**: Create a worktree for isolation: `git worktree add ../worktrees/<repo-name>-<feature-name> -b feat/<feature-name>`
-   - **Fixing an existing PR**: Check out the PR branch instead: `gh pr checkout <pr-number>`
-   - `cd` into the working directory
+   - **New implementation**: Create a worktree for isolation: `Bash(command="git worktree add ../worktrees/<repo-name>-<feature-name> -b feat/<feature-name>", cwd="<repo-name>")`
+   - **Fixing an existing PR**: Check out the PR branch: `Bash(command="gh pr checkout <pr-number>", cwd="<repo-name>")`
+   - Store the working directory path and use it as `cwd` for all subsequent Bash calls
 
 2. **Read the reference implementations** to understand the approach:
    - Use `gh pr diff <pr-number> --repo getsentry/<ref-repo>` to read each reference PR diff
