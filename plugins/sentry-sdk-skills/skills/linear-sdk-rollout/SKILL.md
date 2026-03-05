@@ -22,7 +22,7 @@ These are the teams where a parent issue can be created (Path B only):
 | Backend SDKs | Backend |
 | JavaScript SDKs | JavaScript |
 | Mobile SDKs | Mobile |
-| SDKs | General (also used for Gaming) |
+| GDX | Gaming |
 
 ## SDK Teams
 
