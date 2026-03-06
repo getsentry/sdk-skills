@@ -75,7 +75,7 @@ This handles "continue from where you left off" naturally. Ask the user to confi
 1. Read `${CLAUDE_SKILL_ROOT}/references/agent-prompt.md` for the implementation agent prompt template.
 2. Fill in `<repo-name>`, `<spec-summary>`, `<reference-prs>`, `<feature-name>`, and `<issue-number>` for each SDK.
 3. **Ask the user before spawning agents.** Show them how many agents will be spawned and for which SDKs.
-4. Spawn agents **in parallel** using multiple `Task` tool calls with `model: "opus"`. Each agent clones the repo and creates a git worktree internally for isolation.
+4. Spawn agents **in parallel**. Each agent clones the repo and creates a git worktree internally for isolation.
 
 ### Step 5: Verify with CI
 
