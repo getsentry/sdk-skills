@@ -48,7 +48,7 @@ If a spec URL was found, use `WebFetch` to read it. Otherwise, gather requiremen
 - SDK-specific considerations
 - Breaking changes or deprecations
 
-Ask the user to confirm the summary is accurate before proceeding. Skip if the user already provided a sufficient description.
+Ask the user to confirm the summary is accurate before proceeding.
 
 ### Step 3: Check Implementation State
 
@@ -72,7 +72,7 @@ This handles "continue from where you left off" naturally. Ask the user to confi
 
 ### Step 4: Spawn Implementation Agents
 
-1. Read `${CLAUDE_SKILL_ROOT}/references/agent-prompt.md` for the implementation agent prompt template.
+1. Read `references/agent-prompt.md` for the implementation agent prompt template.
 2. Fill in `<repo-name>`, `<spec-summary>`, `<reference-prs>`, `<feature-name>`, and `<issue-number>` for each SDK.
 3. **Ask the user before spawning agents.** Show them how many agents will be spawned and for which SDKs.
 4. Spawn agents **in parallel**. Each agent clones the repo and creates a git worktree internally for isolation.

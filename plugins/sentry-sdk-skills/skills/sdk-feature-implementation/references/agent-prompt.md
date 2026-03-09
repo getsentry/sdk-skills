@@ -60,17 +60,11 @@ Store the worktree path in a variable early and use `cwd` for every subsequent B
    - If tests fail, fix the issues and re-run
    - Repeat until tests pass locally
 
-6. **Commit and push**:
-   - `git add` the changed files
-   - `git commit` with a descriptive message
-   - `git push -u origin feat/<feature-name>`
-
-7. **Create a draft PR**:
+6. **Commit changes and open a draft PR**
    - Read the repo's PR template if one exists (check `.github/PULL_REQUEST_TEMPLATE.md`)
-   - Use `gh pr create --draft --repo getsentry/<repo-name> --title "feat: <feature-name>" --body "..."`
    - Reference the GitHub issue in the body: "Closes getsentry/<repo-name>#<issue-number>"
 
-8. **Report back** with:
+7. **Report back** with:
    - PR URL
    - Summary of changes made (files modified/created)
    - Local test results (pass/fail summary)
