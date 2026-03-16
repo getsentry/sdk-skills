@@ -44,6 +44,7 @@ Copy the `skills/` directory to your agent's skills location, or reference the S
 | `daily-update` | Generate a formatted async daily standup message for the Sentry SDK team channel. Use when creating a "daily update", "async daily", or "standup update". |
 | `linear-initiative` | Creates Linear projects for SDK teams from an initiative. Use when rolling out features across multiple SDKs. |
 | `sdk-feature-implementation` | Implement a feature across SDK repos by spawning parallel agents — from GitHub issues or Linear context to draft PRs with CI verification. |
+| `span-convention-review` | Review OpenTelemetry tracing span changes in SDK repos for conformance to Sentry Conventions and OTel Semantic Conventions. |
 
 
 ## Repository Structure
