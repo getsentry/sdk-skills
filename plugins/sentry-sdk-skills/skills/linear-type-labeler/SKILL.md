@@ -2,7 +2,7 @@
 name: linear-type-labeler
 description: >
   Classify and apply Type labels to Linear issues based on their title and description.
-allowed-tools: mcp__linear-server__query_data mcp__linear-server__save_issue AskUserQuestion
+allowed-tools: mcp__linear-server__query_data mcp__linear-server__get_issue mcp__linear-server__save_issue AskUserQuestion
 compatibility: Requires the Linear MCP server to be configured.
 ---
 
@@ -108,14 +108,15 @@ If the user provides corrections, update the table and show the revised plan bef
 
 ### Step 6 — Apply labels
 
-For each approved classification, use the issue's label list already fetched in Step 3:
+For each approved classification:
 
-1. Take the issue's existing label IDs (already in memory from Step 3)
+1. Call `get_issue` to fetch the issue's **current** label IDs immediately before writing
 2. Append the Type label UUID from the Step 2 map
 3. Call `save_issue` with the full combined label set
 
-> **Always pass the full combined set.** Linear replaces labels on update — passing only the
-> new Type label UUID would strip all existing labels from the issue.
+> **Always re-fetch and always pass the full combined set.** Linear replaces labels on
+> update — labels added between Step 3 and now would be silently stripped if you use
+> the cached label list.
 
 Report as you go: "SDK-123 → Bug", "SDK-456 → Feature".
 
