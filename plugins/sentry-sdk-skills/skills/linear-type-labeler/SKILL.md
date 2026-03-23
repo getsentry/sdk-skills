@@ -31,10 +31,16 @@ Type labels in the Sentry workspace (workspace-level, not per-team):
 
 ## Workflow
 
-### Step 1 — Identify the team
+### Step 1 — Identify issues to process
 
-Infer in order: (1) current GitHub repository name — for the `getsentry` org, the repo name
-matches the Linear team name, (2) explicitly stated by the user, (3) if still ambiguous, ask.
+Two modes:
+
+**A — List of Linear IDs provided** (e.g. `SDK-123, SDK-456`):
+- Fetch each issue by ID using `get_issue`. Skip the team-fetch step entirely.
+
+**B — No IDs provided**:
+- Infer the team: (1) current GitHub repository name — for the `getsentry` org, the repo name
+  matches the Linear team name, (2) explicitly stated by the user, (3) if still ambiguous, ask.
 
 ### Step 2 — Fetch label IDs
 
@@ -50,11 +56,13 @@ If the workspace has no "Type" label group, surface that to the user before proc
 
 ### Step 3 — Fetch and filter issues
 
-Use `query_data` to list issues for the team, **including each issue's label IDs**.
-Paginate (limit 50, use `cursor`) until done.
+**If in mode A (list of IDs):** use the already-fetched issues from Step 1. Filter client-side:
+keep only those where none of the issue's label IDs appear in the Step 2 UUID map values.
 
-Filter client-side: keep only issues where none of the issue's label IDs appear in the
-Step 2 UUID map values (i.e., no Type label assigned yet).
+**If in mode B (team):** use `query_data` to list issues for the team, **including each issue's
+label IDs**. Paginate (limit 50, use `cursor`) until done. Filter client-side: keep only issues
+where none of the issue's label IDs appear in the Step 2 UUID map values (i.e., no Type label
+assigned yet).
 
 Announce the total candidate count before continuing. If there are more than 25 candidates,
 process in chunks of 25, confirming each chunk before the next.
