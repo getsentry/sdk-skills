@@ -92,7 +92,8 @@ order** — stop at the first match:
 9. Title or description mentions "span", "startSpan", "auto-instrument", "OTel span",
    "span attribute", "span operation" → **Spans**
 10. Title or description mentions "trace", "tracing", "traceparent", "baggage", "sentry-trace",
-    "distributed trac", "trace propagat", "trace sampl" → **Traces**
+    "distributed trac", "trace propagat", "trace sampl" → **Traces** (unless the match is
+    specifically "stack trace" or "traceback", which should be treated as **Errors**)
 11. Title or description mentions "error", "exception", "crash", "captureException",
     "captureMessage", "error group", "fingerprint" → **Errors**
 
@@ -129,8 +130,10 @@ If the user provides corrections, update the table and show the revised plan bef
 For each approved classification:
 
 1. Call `get_issue` to fetch the issue's **current** label IDs immediately before writing
-2. Append the SDK Telemetry label UUID from the Step 2 map
-3. Call `save_issue` with the full combined label set
+2. Re-check the current labels against the Step 2 UUID map; if any SDK Telemetry label is already
+   present, skip the issue
+3. Append the SDK Telemetry label UUID from the Step 2 map
+4. Call `save_issue` with the full combined label set
 
 > **Always re-fetch and always pass the full combined set.** Linear replaces labels on
 > update — labels added between Step 3 and now would be silently stripped if you use
