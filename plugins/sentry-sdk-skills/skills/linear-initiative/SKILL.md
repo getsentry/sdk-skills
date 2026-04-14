@@ -19,7 +19,7 @@ Only teams with Enabled=Yes are included when creating projects.
 
 | Team | Suffix | Category | Enabled |
 |------|--------|----------|---------|
-| sentry-android | Android | Mobile | Yes |
+| sentry-java | Android | Mobile | Yes |
 | sentry-capacitor | Capacitor | JavaScript, Mobile | Yes |
 | sentry-cocoa | Apple | Mobile | Yes |
 | sentry-cordova | Cordova | Mobile | Yes |
@@ -115,7 +115,7 @@ Response flow:
 2. Confirm the initiative found is correct
 3. Ask about naming preference (with suffix, no suffix, or custom)
 4. Create projects with names like:
-   - "Session Replay [Android]" (sentry-android)
+   - "Session Replay [Android]" (sentry-java)
    - "Session Replay [Capacitor]" (sentry-capacitor)
    - "Session Replay [Apple]" (sentry-cocoa)
    - "Session Replay [Dart/Flutter]" (sentry-dart)

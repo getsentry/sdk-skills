@@ -4,7 +4,7 @@ All repos are under the `getsentry` GitHub org. Only repos/teams with Enabled=Ye
 
 | Repo / Team | Suffix | Category | Enabled |
 |-------------|--------|----------|---------|
-| sentry-android | Android | Mobile | Yes |
+| sentry-java | Android | Mobile | Yes |
 | sentry-capacitor | Capacitor | JavaScript, Mobile | Yes |
 | sentry-cocoa | Apple | Mobile | Yes |
 | sentry-cordova | Cordova | Mobile | Yes |
