@@ -50,6 +50,19 @@ If a spec URL was found, use `WebFetch` to read it. Otherwise, gather requiremen
 
 Ask the user to confirm the summary is accurate before proceeding.
 
+### Step 2.5: Identify SDK Dependencies
+
+Hybrid SDKs depend on native SDKs for their platform layers:
+- **sentry-react-native** and **sentry-capacitor** wrap `@sentry/core` (JS) + sentry-cocoa (iOS) + sentry-java (Android)
+- **sentry-dart** (Flutter) has its own Dart implementation but uses sentry-cocoa (iOS) and sentry-java (Android) for native crash reporting and trace context in crash envelopes
+- **sentry-unity** and **sentry-kotlin-multiplatform** also depend on sentry-cocoa and sentry-java
+
+When implementing across both hybrid and native SDKs:
+- **Implement native SDKs (Cocoa, Java) first** — hybrid SDKs can't compile native bridge code until those are released
+- **JS wrapper SDKs** (React Native, Capacitor) may already have the feature via `@sentry/core` — check before implementing from scratch. If `@sentry/core` already has it, the work is: expose options in SDK types, pass through to native bridge, add tests
+- **Hybrid SDK PRs should note** in "Next steps" which native SDK PRs must merge and be released before the hybrid SDK is fully functional
+- **Only spawn ONE agent per repo.** If a repo already has a worktree/branch from a previous run, reuse it
+
 ### Step 3: Check Implementation State
 
 For each target repo, check for existing PRs:
@@ -91,27 +104,58 @@ If CI fails:
    gh run view <run-id> --repo getsentry/<repo-name> --log-failed
    ```
 
-2. **Spawn a fix agent** with the CI error output included in the prompt.
+2. **Fix the issue directly** or spawn a fix agent with the CI error output included in the prompt.
 
-3. The fix agent should:
+3. The fix should:
    - Read the failing files locally in the worktree
    - Reproduce and verify the fix locally
    - Push fixes with `git push`
 
 4. Re-check CI status after the fix.
 
+**Expect 2-3 CI fix iterations.** Common issues:
+- **Formatting** — Run formatters with resolved dependencies (e.g., `dart pub get` before `dart format`)
+- **Linting** — Unnecessary imports, public API exposure for `@internal` functions
+- **API stability** — Some SDKs (Cocoa, Java) have API baseline checks; regenerate if you changed public API
+- **Doc sync tests** — Some SDKs check that all options are documented in sentry-docs; add to allowlist if docs PR is separate
+- **Changelog** — Some SDKs verify changelog entries exist for new features
+
 Run CI-monitoring agents in the background so multiple PRs can be checked in parallel.
 
-### Step 6: Collect Results
+### Step 5.5: Address Review Feedback
+
+After CI passes, check for automated review feedback (Cursor bot, Danger, Sentry bot, etc.):
+
+```bash
+gh api repos/getsentry/<repo-name>/pulls/<number>/comments
+gh api repos/getsentry/<repo-name>/issues/<number>/comments
+```
+
+- Address valid feedback with code fixes and reply referencing the fix commit
+- Reply to false positives with reasoning
+- Common automated feedback: missing option allowlists, public API exposure, test coverage gaps
+
+### Step 6: Create Documentation PRs
+
+For each SDK implementation, check if sentry-docs needs updates:
+
+1. Search sentry-docs for existing documentation related to the feature (e.g., configuration options pages, feature-specific guides, platform includes)
+2. Add or update documentation as needed — new options, new guides, or updated platform-specific includes
+3. Create docs PRs following the sentry-docs PR template (`.github/PULL_REQUEST_TEMPLATE.md`)
+4. Link docs PRs from the SDK PRs
+
+Create separate docs PRs per SDK — don't bundle multiple platforms into one PR.
+
+### Step 7: Collect Results
 
 Once all agents complete and CI passes:
 
 1. **Present a results table**:
    ```
-   | SDK Repo | GH Issue | Draft PR | CI Status | Notes |
-   |----------|----------|----------|-----------|-------|
-   | sentry-rust | #123 | #456 | Passing | Ready for review |
-   | sentry-go | #124 | #457 | Failing | Test timeout, needs manual fix |
+   | SDK Repo | GH Issue | Draft PR | CI Status | Docs PR | Notes |
+   |----------|----------|----------|-----------|---------|-------|
+   | sentry-rust | #123 | #456 | Passing | #789 | Ready for review |
+   | sentry-go | #124 | #457 | Failing | — | Test timeout, needs manual fix |
    ```
 
 2. **Link to Linear** (if available):
@@ -141,5 +185,6 @@ Response flow:
 3. Check existing PRs — Rust has nothing, Go has a failing draft, Java has nothing
 4. Confirm plan: spawn 2 new agents (Rust, Java) + 1 fix agent (Go)
 5. Spawn agents in parallel with worktree isolation
-6. Monitor CI, spawn fix agents for failures
-7. Present results table, link to Linear
+6. Monitor CI, fix failures (expect 2-3 iterations)
+7. Create docs PRs for each SDK
+8. Present results table, link to Linear
