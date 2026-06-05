@@ -22,7 +22,6 @@ Only teams with Enabled=Yes are included when creating projects.
 | sentry-java | Android | Mobile | Yes |
 | sentry-capacitor | Capacitor | JavaScript, Mobile | Yes |
 | sentry-cocoa | Apple | Mobile | Yes |
-| sentry-cordova | Cordova | Mobile | Yes |
 | sentry-dart | Dart/Flutter | Mobile | Yes |
 | sentry-dotnet | .NET | Backend | Yes |
 | sentry-electron | Electron | JavaScript | Yes |
