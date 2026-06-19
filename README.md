@@ -47,6 +47,7 @@ Copy the `skills/` directory to your agent's skills location, or reference the S
 | `linear-sdk-telemetry-labeler` | Classify and apply SDK Telemetry labels (Errors, Spans, Traces, Profiles, Replays, Logs, Metrics, Checks, etc.) to Linear issues. Use when tagging issues by telemetry signal. Accepts a team name or a list of Linear IDs. |
 | `linear-type-labeler` | Classify and apply Type labels (Bug, Feature, Improvement, Task, etc.) to Linear issues. Use when triaging unlabeled issues or bulk-tagging issues by type. Accepts a team name or a list of Linear IDs. |
 | `sdk-feature-implementation` | Implement a feature across SDK repos by spawning parallel agents — from GitHub issues or Linear context to draft PRs with CI verification. |
+| `sentry-python-code-review` | Additional code review checks for sentry-python: conventions conformance, public API test coverage, and streamed span test assertions. Use alongside the general code-review skill. |
 | `span-convention-review` | Review OpenTelemetry tracing span changes in SDK repos for conformance to Sentry Conventions and OTel Semantic Conventions. |
 
 
